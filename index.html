@@ -186,6 +186,25 @@
     };
 
     function App() {
+
+// --- DICE SFX ---
+  const diceSoundFiles = ['./Dice-1.wav', './Dice-2.wav', './Dice-3.wav'];
+  const lastDiceIndexRef = useRef(-1);
+
+  const playDiceSound = useCallback(() => {
+    let nextIdx;
+    do {
+      nextIdx = Math.floor(Math.random() * diceSoundFiles.length);
+    } while (nextIdx === lastDiceIndexRef.current && diceSoundFiles.length > 1);
+
+    lastDiceIndexRef.current = nextIdx;
+    const audio = new Audio(diceSoundFiles[nextIdx]);
+    audio.currentTime = 0;
+    audio.play().catch((err) => console.log('Audio error:', err));
+  }, []);
+
+
+      
       const [gameState, setGameState] = useState('MENU');
       const [setupConfig, setSetupConfig] = useState(
         PLAYER_CONFIGS.map((p, idx) => ({ 
@@ -446,7 +465,12 @@
           setPlayers(prev => { const up = [...prev]; up[currentPlayer].skipTurn = false; return up; }); 
           nextTurn(`${pCurrent.name} released.`); 
           return; 
-        }       
+        }     
+
+
+        playDiceSound(); // <--- ADD THIS LINE HERE
+
+        
         
         setIsRolling(true);
         let rolls = 0;
