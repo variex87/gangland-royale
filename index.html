@@ -36,56 +36,6 @@
 
 
     
-// Master SFX Mapping - Match these file names to your uploaded MP3s on GitHub   
-    
-const SFX = {
-  dice: ['./dice-1.wav', './dice-2.wav3', './dice-3.wav'], // Multi-file: cycles without repeating
-  buy: './buy.mp3',
-  muscle: './muscle.mp3',
-  recruit: './recruit.mp3',
-  arms: './arms.mp3',
-  heistSuccess: './heist_win.mp3',
-  heistFail: './heist_fail.mp3',
-  war: './war.mp3',
-  battleVictory: './victory.mp3',
-  battleDefeat: './defeat.mp3',
-  pinched: './pinched.mp3',
-  jail: './jail.mp3',
-  recover: './recover.mp3',
-  tribute: './tribute.mp3',
-  lockedDown: './locked_down.mp3'
-};
-
-const lastSfxIndices = useRef({});
-
-// Universal Helper Function to play any sound
-const playSound = useCallback((key) => {
-  const item = SFX[key];
-  if (!item) return;
-
-  let fileUrl;
-  if (Array.isArray(item)) {
-    // Pick a random sound from the array without repeating the same index twice in a row
-    const lastIdx = lastSfxIndices.current[key] ?? -1;
-    let nextIdx;
-    do {
-      nextIdx = Math.floor(Math.random() * item.length);
-    } while (nextIdx === lastIdx && item.length > 1);
-    
-    lastSfxIndices.current[key] = nextIdx;
-    fileUrl = item[nextIdx];
-  } else {
-    fileUrl = item;
-  }
-
-  const audio = new Audio(fileUrl);
-  audio.currentTime = 0;
-  audio.play().catch(e => console.log('Audio playback prevented:', e));
-}, []);
-
-
-
-    
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
     /* LUCIDE ICON HELPER FOR BROWSER RUNTIME */
@@ -496,10 +446,7 @@ const playSound = useCallback((key) => {
           setPlayers(prev => { const up = [...prev]; up[currentPlayer].skipTurn = false; return up; }); 
           nextTurn(`${pCurrent.name} released.`); 
           return; 
-        }
-
-playSound('dice'); // <--- TRIGGER 1: Dice Roll Press
-        
+        }       
         
         setIsRolling(true);
         let rolls = 0;
