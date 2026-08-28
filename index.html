@@ -497,6 +497,10 @@ const playSound = useCallback((key) => {
           nextTurn(`${pCurrent.name} released.`); 
           return; 
         }
+
+playSound('dice'); // <--- TRIGGER 1: Dice Roll Press
+        
+        
         setIsRolling(true);
         let rolls = 0;
         const interval = setInterval(() => { 
