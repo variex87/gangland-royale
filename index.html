@@ -183,9 +183,11 @@
     };
 
     function App() {
-      // MASTER SFX MAPPING
+      /* =========================================================================
+         YOUR SOUND EFFECT FILE NAMES (Match these to your exact GitHub filenames)
+         ========================================================================= */
       const SFX = {
-        dice: ['./Dice-1.wav', './Dice-2.wav', './Dice-3.wav'], // Multi-file dice sounds
+        dice: ['./Dice-1.wav', './Dice-2.wav', './Dice-3.wav'], 
         buy: './buy.mp3',
         muscle: './muscle.mp3',
         recruit: './recruit.mp3',
@@ -226,8 +228,7 @@
         audio.currentTime = 0;
         audio.play().catch(e => console.log('Audio playback status:', e));
       }, []);
-
-  
+      /* ========================================================================= */
 
       const [gameState, setGameState] = useState('MENU');
       const [setupConfig, setSetupConfig] = useState(
@@ -337,7 +338,6 @@
         const owners = Object.values(lockedDistricts);
         const lockedCount = owners.filter(o => o !== null).length;
 
-        // TRIGGER 15: District Lockdown
         if (lockedCount > prevLockedCountRef.current && prevLockedCountRef.current !== 0) {
           playSound('lockedDown');
         }
@@ -411,7 +411,6 @@
       };
 
       const handleLaunch = () => {
-        
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
         const initialPlayers = activeConfigs.map((c, idx) => ({
@@ -493,7 +492,6 @@
 
       const startRoll = useCallback(() => {
         if (turnStarted || isRolling || victory || staleMate) return;
-        unlockAudio();
         const pCurrent = players[currentPlayer];
         if (pCurrent.skipTurn) { 
           setPlayers(prev => { const up = [...prev]; up[currentPlayer].skipTurn = false; return up; }); 
@@ -501,7 +499,6 @@
           return; 
         }
 
-        // TRIGGER 1: Dice Roll
         playSound('dice');
 
         setIsRolling(true);
@@ -515,7 +512,7 @@
             setIsRolling(false); 
           } 
         }, 60);
-      }, [currentPlayer, isRolling, nextTurn, players, turnStarted, victory, staleMate, playSound);
+      }, [currentPlayer, isRolling, nextTurn, players, turnStarted, victory, staleMate, playSound]);
 
       const checkPinchThreshold = (currentHeat, increment) => {
         const projected = Math.round((currentHeat + increment) * 2) / 2;
@@ -525,7 +522,6 @@
       const resolvePinch = useCallback(() => {
         if (!pinched) return;
 
-        // TRIGGER 12: Serve Your Time / Jail Press
         playSound('jail');
 
         const jailTile = map.find(t => t.type === 'jail');
@@ -541,7 +537,6 @@
       const processBattleResult = useCallback(() => {
         if (!battle) return;
 
-        // TRIGGER 13: Recover / Claim Victory Press
         playSound('recover');
 
         const win = battleWinner;
@@ -617,7 +612,7 @@
             return up; 
         });
         if (pinchTarget) {
-            playSound('pinched'); // TRIGGER 11: Pinched Screen
+            playSound('pinched');
             setPinched({
                 name: players[pinchTarget.idx].name, fine: Math.floor(players[pinchTarget.idx].money * 0.25),
                 playerIndex: pinchTarget.idx, logMsg: pinchTarget.msg, context: "OPERATION PINCHED"
@@ -705,7 +700,6 @@
       const handleAction = (type, cost, inf, heatInc) => {
         if (victory || staleMate) return;
 
-        // TRIGGERS 2, 3, 4, 5, 14: Action Presses
         if (type === 'buy') playSound('buy');
         if (type === 'muscle') playSound('muscle');
         if (type === 'recruit') playSound('recruit');
@@ -756,7 +750,7 @@
           return up;
         });
         if (isPinched) {
-          playSound('pinched'); // TRIGGER 11: Pinched Screen
+          playSound('pinched');
           setPinched({ 
             name: p.name, fine: Math.floor(p.money * 0.25), playerIndex: currentPlayer, 
             logMsg: `${p.name} was caught! Securing the asset drew too much attention. Off to the precinct.`,
@@ -789,7 +783,7 @@
             });
         }
         if (isPinched) {
-          playSound('pinched'); // TRIGGER 11: Pinched Screen
+          playSound('pinched');
           setPinched({ 
             name: p.name, fine: Math.floor(p.money * 0.25), playerIndex: currentPlayer, 
             logMsg: success ? `The score was huge, but you triggered a silent alarm. Cops caught you with the bag.` : `The vault stayed shut and you were cornered by a tactical unit. You're going to jail.`,
@@ -798,16 +792,16 @@
           return;
         }
         if (success) {
-          playSound('heistSuccess'); // TRIGGER 6: Heist Success
+          playSound('heistSuccess');
           setActionOutcome({ success: true, title: "Heist Successful!", body: `Safe cracked. Secured $${heistReward}. Slipped away into the night.`, actionLog: `${p.name} pulled off a professional heist for $${heistReward}.` });
         } else {
-          playSound('heistFail'); // TRIGGER 7: Heist Fail
+          playSound('heistFail');
           setActionOutcome({ success: false, title: "Heist Failed!", body: "The safe was too tough. You fled before the cops arrived.", actionLog: `${p.name} botched a heist.` });
         }
       };
 
       const executeBattle = () => {
-        playSound('war'); // TRIGGER 8: "War in the Streets" Screen
+        playSound('war');
 
         setBattleStep('anim');
         setTimeout(() => {
@@ -817,9 +811,9 @@
           setBattleStep('result');
 
           if (win) {
-            playSound('battleVictory'); // TRIGGER 9: Battle Victory Screen
+            playSound('battleVictory');
           } else {
-            playSound('battleDefeat');  // TRIGGER 10: Battle Defeat Screen
+            playSound('battleDefeat');
           }
         }, 1500);
       };
@@ -1186,7 +1180,7 @@
                           <span className="text-[10px] font-black uppercase">Buy Arms</span>
                           <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-500" color="text-red-300" /><StatChange icon="crosshair" value="+4 PWR" color="text-white" /></div>
                         </button>
-                        <button disabled={pCurrent?.isCPU || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
+                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
                           <span className="text-[10px] font-black uppercase">Pull Heist</span>
                           <div className="flex flex-col items-center"><StatChange icon="shield-alert" value="+1.0" color="text-orange-400" /><StatChange icon="target" value="45%" color="text-amber-200" /><StatChange icon="briefcase" value="+$???" color="text-emerald-300" /></div>
                         </button>
