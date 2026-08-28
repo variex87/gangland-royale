@@ -417,6 +417,14 @@
       };
 
       const handleLaunch = () => {
+
+        // Unlocks browser audio policy for subsequent CPU turns
+    const dummyAudio = new Audio('./Dice-1.wav');
+    dummyAudio.play().then(() => {
+      dummyAudio.pause();
+      dummyAudio.currentTime = 0;
+    }).catch(() => {});
+        
         unlockAudio();
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
