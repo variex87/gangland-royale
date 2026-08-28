@@ -1,0 +1,1131 @@
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { 
+  Store, Warehouse, Gem, Dices, Crown, Users, 
+  Briefcase, Sword, MapPin, Skull, Building2, 
+  Shield, Target, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
+  ShieldAlert, Wind, Banknote, Landmark, Gavel, AlertTriangle, TrendingUp, Flame, Lock,
+  User, Cpu, Shuffle, Play, HeartPulse, LockKeyhole, Trophy, Undo2, DollarSign,
+  Handshake, Crosshair, Hand, BookOpen, X, Medal
+} from 'lucide-react';
+
+/**
+ * PWA BOILERPLATE - Manifest and Service Worker registration
+ * This allows the app to be "installed" on mobile devices.
+ */
+const manifest = {
+  "name": "Turf Empire",
+  "short_name": "TurfEmpire",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M6 18c0-3 2-5 6-5s6 2 6 5v3H6v-3z'%3E%3C/path%3E%3Ccircle cx='12' cy='9' r='3'%3E%3C/circle%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+};
+
+const swCode = `
+const CACHE_NAME = 'turf-empire-v1';
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./'])));
+});
+self.addEventListener('fetch', (event) => {
+  event.respondWith(caches.match(event.request).then((response) => response || fetch(event.request)));
+});
+`;
+
+/* GAME CONSTANTS */
+const GRID_SIZE = 8;
+const MAX_PLAYERS = 4;
+const BASE_INCOME = 150;
+const INCOME_PER_PROP = 100;
+const INCOME_PER_CREW = 20; 
+
+const FlexArmIcon = ({ size = 20, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M6 16c-2 0-3-1-3-3s1-3.5 3-3.5" />
+    <path d="M12 21c-4 0-6-2-6-5s2-5 6-5" />
+    <path d="M15 15c2 0 4-1 4-4s-2-4-4-4-4 1-4 4" />
+    <path d="M15 7c1-1 2-2 3-2" />
+    <path d="M11 11c0-3 1.5-6 4-6" />
+    <path d="M18 5l3 3" />
+  </svg>
+);
+
+const MedicalCrossIcon = ({ size = 18, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+const JailBarsIcon = ({ size = 20, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <rect x="3" y="3" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M7 3v18M10.33 3v18M13.66 3v18M17 3v18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const PLAYER_CONFIGS = [
+  { id: 0, name: 'Gambino', color: 'bg-blue-600', text: 'text-blue-400', ring: '#2563eb', startX: 0, startY: 0 },
+  { id: 1, name: 'Luciano', color: 'bg-red-600', text: 'text-red-400', ring: '#dc2626', startX: 7, startY: 0 },
+  { id: 2, name: 'Colombo', color: 'bg-emerald-600', text: 'text-emerald-400', ring: '#059669', startX: 0, startY: 7 },
+  { id: 3, name: 'Genovese', color: 'bg-purple-600', text: 'text-purple-400', ring: '#9333ea', startX: 7, startY: 7 },
+];
+
+const DISTRICTS = {
+  DOCKS: { id: 'DOCKS', name: 'Docks', accent: 'border-blue-500/60', bg: 'bg-zinc-900', color: 'text-blue-400', names: ["Pier 17", "Cargo Bay", "The Slipway", "Cold Storage", "Fisherman's Wharf"] },
+  ITALY: { id: 'ITALY', name: 'Italy', accent: 'border-red-500/60', bg: 'bg-zinc-900', color: 'text-red-400', names: ["Mama's Bistro", "Venice Square", "The Grotto", "Piazza Grande", "Old Country Deli"] },
+  FINANCE: { id: 'FINANCE', name: 'Finance', accent: 'border-emerald-500/60', bg: 'bg-zinc-900', color: 'text-emerald-400', names: ["First Trust", "Stock Exchange", "Gold Tower", "The Vault", "Credit Union"] },
+  HEIGHTS: { id: 'HEIGHTS', name: 'Heights', accent: 'border-purple-500/60', bg: 'bg-zinc-900', color: 'text-purple-400', names: ["Prestige Estates", "Grand Hotel", "Skyline View", "Ivy Manor", "The Penthouse"] },
+  STREET: { id: 'STREET', name: 'Street', accent: 'border-zinc-700', bg: 'bg-zinc-700', color: 'text-zinc-400', names: ["Back Alley", "Underpass", "Tenth Ave", "Market Row", "Bus Terminal", "Neon Corner"] }
+};
+
+const BUSINESS_ICONS = [<Store size={18} key="store"/>, <Warehouse size={18} key="warehouse"/>, <Gem size={18} key="gem"/>, <Building2 size={18} key="building"/>];
+const RANDOM_NAMES = ["Capone", "Gotti", "Costello", "Bonanno", "Maranzano", "Luciano", "Morello", "Soprano", "Corleone", "Masseria"];
+
+const generateDistrictCosts = () => {
+  const count = 9;
+  const target = 10000;
+  const min = 500;
+  let costs = Array(count).fill(min);
+  let currentSum = min * count;
+  let remaining = target - currentSum;
+  while (remaining > 0) {
+    const idx = Math.floor(Math.random() * count);
+    costs[idx] += 200;
+    remaining -= 200;
+  }
+  return costs;
+};
+
+const MobsterToken = ({ ring, isCurrent, soldiers, movesLeft, turnStarted, onMove }) => (
+  <div className={`relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-all duration-300 ${isCurrent ? 'z-[100] scale-110' : 'z-[50] scale-100 opacity-100'}`}>
+    <div className={`absolute inset-0 rounded-full blur-md opacity-80 scale-110`} style={{ backgroundColor: ring }} />
+    {isCurrent && <div className="absolute inset-0 rounded-full animate-pulse opacity-50 bg-white scale-125 z-0" />}
+    {isCurrent && turnStarted && movesLeft > 0 && (
+      <div className="absolute inset-0 z-[120] pointer-events-none">
+        <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-white/90 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto"><ChevronUp size={11}/></button>
+        <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 text-white/90 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto"><ChevronDown size={11}/></button>
+        <button onClick={(e) => {e.stopPropagation(); onMove(-1, 0)}} className="absolute -left-3.5 top-1/2 -translate-y-1/2 text-white/90 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto"><ChevronLeft size={11}/></button>
+        <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3.5 top-1/2 -translate-y-1/2 text-white/90 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto"><ChevronRight size={11}/></button>
+      </div>
+    )}
+    <div className="absolute -bottom-1 -right-1 bg-black text-white text-[9px] font-black aspect-square w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-[110] shadow-lg leading-none">
+      {soldiers + 1}
+    </div>
+    <svg viewBox="0 0 24 24" className="w-full h-full filter drop-shadow-2xl relative z-10" fill="none">
+      <circle cx="12" cy="12" r="10" fill="#000" stroke={ring} strokeWidth="2.5" />
+      <path d="M6 18 C6 15 8 13 12 13 C16 13 18 15 18 18 V21 H6 Z" fill="#111" stroke="white" strokeWidth="0.5" />
+      <path d="M10.5 13 L12 15.5 L13.5 13" stroke="white" strokeWidth="0.8" fill="none" />
+      <circle cx="12" cy="9.5" r="2.8" fill="#eac086" stroke="black" strokeWidth="0.2" />
+      <path d="M9 9 L9 6.5 Q12 4.5 15 6.5 L15 9" fill="black" stroke="white" strokeWidth="0.5" />
+      <rect x="8.5" y="9" width="7" height="1.2" rx="0.3" fill="black" stroke="white" strokeWidth="0.5" />
+    </svg>
+  </div>
+);
+
+const StatChange = ({ icon: Icon, value, color }) => (
+  <div className="flex items-center gap-0.5">
+    <Icon size={11} className={color}/>
+    <span className={`text-[10px] font-black ${color}`}>{value}</span>
+  </div>
+);
+
+const FloatingVFX = ({ x, y, type, onComplete }) => {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+  const getIcon = () => {
+    switch(type) {
+      case 'cash': return <DollarSign size={24} className="text-emerald-400" />;
+      case 'recruit': return <Handshake size={24} className="text-blue-400" />;
+      case 'loss': return <Skull size={24} className="text-red-500" />;
+      case 'pinch': return <Gavel size={24} className="text-white" />;
+      case 'heartbeat': return <HeartPulse size={24} className="text-pink-500" />;
+      case 'arms': return <Crosshair size={24} className="text-cyan-400" />;
+      case 'muscle': return <FlexArmIcon size={24} className="text-orange-500" />;
+      case 'buy': return <Crown size={24} className="text-amber-500" />;
+      default: return null;
+    }
+  };
+  return (
+    <div className="absolute z-[1000] pointer-events-none animate-bounce" 
+         style={{ left: `${x}%`, top: `${y}%`, transition: 'all 1.2s ease-out', transform: 'translate(-50%, -50%)' }}>
+      <div className="flex items-center scale-150 drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+        {getIcon()}
+      </div>
+    </div>
+  );
+};
+
+export function App() {
+  // PWA logic: Inject manifest and SW
+  useEffect(() => {
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
+
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(swURL);
+    }
+  }, []);
+
+  const [gameState, setGameState] = useState('MENU');
+  const [setupConfig, setSetupConfig] = useState(
+    PLAYER_CONFIGS.map((p, idx) => ({ 
+      ...p, 
+      active: idx < 2, 
+      isCPU: idx > 0, 
+      customName: p.name 
+    }))
+  );
+
+  const [map, setMap] = useState([]);
+  const [viewedPlayer, setViewedPlayer] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [players, setPlayers] = useState([]);
+
+  const [movesLeft, setMovesLeft] = useState(0);
+  const [turnStarted, setTurnStarted] = useState(false);
+  const [isRolling, setIsRolling] = useState(false);
+  const [ticker, setTicker] = useState(["", "STANDBY FOR ORDERS..."]);
+  const [selectedTile, setSelectedTile] = useState(null);
+  const [battle, setBattle] = useState(null);
+  const [battleStep, setBattleStep] = useState('idle');
+  const [battleWinner, setBattleWinner] = useState(null);
+  const [pinched, setPinched] = useState(null);
+  const [actionOutcome, setActionOutcome] = useState(null);
+  const [victory, setVictory] = useState(null);
+  const [staleMate, setStaleMate] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [particles, setParticles] = useState([]);
+
+  const touchStart = useRef(null);
+  const aiActionTimeoutRef = useRef(null);
+
+  const triggerVFX = useCallback((type, px, py) => {
+    const id = Date.now() + Math.random();
+    setParticles(prev => [...prev, { id, x: px, y: py, type }]);
+  }, []);
+
+  const initMap = useCallback((activeIds) => {
+    const newMap = [];
+    const distPricePools = {
+      DOCKS: generateDistrictCosts(),
+      ITALY: generateDistrictCosts(),
+      FINANCE: generateDistrictCosts(),
+      HEIGHTS: generateDistrictCosts()
+    };
+    const distCounters = { DOCKS: 0, ITALY: 0, FINANCE: 0, HEIGHTS: 0 };
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
+        const isNeutral = (x === 3 || x === 4 || y === 3 || y === 4);
+        let dist = DISTRICTS.STREET;
+        if (!isNeutral) {
+          if (x < 4 && y < 4) dist = DISTRICTS.DOCKS;
+          else if (x >= 4 && y < 4) dist = DISTRICTS.ITALY;
+          else if (x < 4 && y >= 4) dist = DISTRICTS.FINANCE;
+          else if (x >= 4 && y >= 4) dist = DISTRICTS.HEIGHTS;
+        }
+        let tileName = dist.names[(x + y) % dist.names.length];
+        let tileType = isNeutral ? 'street' : 'property';
+        if (x === 0 && y === 3) {
+            tileName = "Mercy Hospital";
+            tileType = "hospital";
+        } else if (x === 7 && y === 4) {
+            tileName = "County Jail";
+            tileType = "jail";
+        }
+        let hqOwnerId = null;
+        if (x === 0 && y === 0 && activeIds.includes(0)) hqOwnerId = 0;
+        else if (x === 7 && y === 0 && activeIds.includes(1)) hqOwnerId = 1;
+        else if (x === 0 && y === 7 && activeIds.includes(2)) hqOwnerId = 2;
+        else if (x === 7 && y === 7 && activeIds.includes(3)) hqOwnerId = 3;
+        let tileCost = 0;
+        if (tileType === 'property') {
+           const pool = distPricePools[dist.id];
+           tileCost = pool[distCounters[dist.id] % 9];
+           distCounters[dist.id]++;
+        }
+        newMap.push({ 
+          id: `${x}-${y}`, x, y, dist, 
+          locationName: hqOwnerId !== null ? `${PLAYER_CONFIGS[hqOwnerId].name} HQ` : tileName,
+          type: tileType, owner: hqOwnerId, isHQ: hqOwnerId !== null,
+          icon: isNeutral ? null : BUSINESS_ICONS[(x + y) % 4],
+          cost: tileCost
+        });
+      }
+    }
+    setMap(newMap);
+  }, []);
+
+  const lockedDistricts = useMemo(() => {
+    const status = { DOCKS: null, ITALY: null, FINANCE: null, HEIGHTS: null };
+    if (!map.length) return status;
+    Object.keys(status).forEach(distKey => {
+      const distTiles = map.filter(t => t.dist.id === distKey && t.type === 'property');
+      if (distTiles.length === 0) return;
+      const firstOwner = distTiles[0].owner;
+      if (firstOwner !== null && distTiles.every(t => t.owner === firstOwner)) {
+        status[distKey] = firstOwner;
+      }
+    });
+    return status;
+  }, [map]);
+
+  useEffect(() => {
+    const owners = Object.values(lockedDistricts);
+    const lockedCount = owners.filter(o => o !== null).length;
+    const uniqueOwners = [...new Set(owners.filter(o => o !== null))];
+    
+    for (const ownerId of uniqueOwners) {
+      const playerLockCount = owners.filter(o => o === ownerId).length;
+      if (playerLockCount === 4) {
+        const winner = players.find(p => p.id === ownerId);
+        if (winner && !victory) {
+          setVictory(winner);
+        }
+        return;
+      }
+    }
+
+    if (lockedCount === 4 && uniqueOwners.length > 1 && !staleMate) {
+      setStaleMate(true);
+    }
+  }, [lockedDistricts, players, victory, staleMate]);
+
+  const winningOrder = useMemo(() => {
+    if (!staleMate) return [];
+    return [...players].sort((a, b) => b.influence - a.influence);
+  }, [staleMate, players]);
+
+  useEffect(() => {
+    if (map.length > 0 && players.length > 0) {
+      setPlayers(prevPlayers => {
+        let changed = false;
+        const syncedPlayers = prevPlayers.map(p => {
+          const actualCount = map.filter(t => t.owner === p.id).length;
+          if (p.properties !== actualCount) {
+            changed = true;
+            return { ...p, properties: actualCount };
+          }
+          return p;
+        });
+        return changed ? syncedPlayers : prevPlayers;
+      });
+    }
+  }, [map]);
+
+  const getPower = (p) => Math.floor(1 + (p?.soldiers || 0) + (p?.extraPower || 0));
+  const getIncome = (p) => BASE_INCOME + ((p?.properties || 0) * INCOME_PER_PROP) + ((p?.soldiers || 0) * INCOME_PER_CREW);
+  const getInfluenceGain = (p) => {
+    const fromTurf = (p?.properties || 0) * 10;
+    const fromCrew = p?.soldiers > 0 ? p.soldiers * 5 : 0;
+    return fromTurf + fromCrew;
+  };
+
+  const calculateWinChance = (atk, def) => {
+    const totalPower = getPower(atk) + getPower(def) || 1;
+    const totalCrew = (atk.soldiers + 1) + (def.soldiers + 1) || 1;
+    const totalInfluence = Math.max(1, (atk.influence + def.influence)) || 1;
+    const powerShare = getPower(atk) / totalPower;
+    const crewShare = (atk.soldiers + 1) / totalCrew;
+    const influenceShare = Math.max(0.1, atk.influence) / totalInfluence;
+    const finalChance = (powerShare * 0.40) + (crewShare * 0.30) + (influenceShare * 0.30);
+    return Math.min(0.95, Math.max(0.05, finalChance));
+  };
+
+  const getHeatColor = (heat) => {
+    if (heat >= 5) return 'text-red-600 animate-pulse font-black';
+    if (heat >= 4) return 'text-red-500 font-bold';
+    if (heat >= 2.5) return 'text-orange-500';
+    if (heat >= 1) return 'text-amber-500';
+    return 'text-zinc-500';
+  };
+
+  const handleLaunch = () => {
+    const activeConfigs = setupConfig.filter(c => c.active);
+    const activeIds = activeConfigs.map(c => c.id);
+    const initialPlayers = activeConfigs.map((c, idx) => ({
+      ...c, name: c.customName, gameIdx: idx, 
+      x: c.startX, y: c.startY, prevX: c.startX, prevY: c.startY, hqX: c.startX, hqY: c.startY,
+      money: 1500, heat: 0, soldiers: 0, influence: 0, properties: 1, extraPower: 0, 
+      isEliminated: false, committedCrime: false, skipTurn: false
+    }));
+    initMap(activeIds);
+    setPlayers(initialPlayers);
+    setCurrentPlayer(0);
+    setViewedPlayer(0);
+    setVictory(null);
+    setStaleMate(false);
+    setTicker([`${initialPlayers[0].name}'s turn. Ready.`, "INITIATING UNDERWORLD PROTOCOLS..."]);
+    setGameState('GAME');
+  };
+
+  const movePlayer = useCallback((dx, dy) => {
+    if (movesLeft <= 0 || !turnStarted || victory || staleMate) return;
+    setPlayers(prev => {
+      const up = [...prev];
+      const p = up[currentPlayer];
+      const nX = p.x + dx;
+      const nY = p.y + dy;
+      if (nX >= 0 && nX < GRID_SIZE && nY >= 0 && nY < GRID_SIZE) {
+        p.x = nX; p.y = nY;
+        const rem = movesLeft - 1;
+        setMovesLeft(rem);
+        if (rem === 0) {
+          const tile = map.find(t => t.x === nX && t.y === nY);
+          const rivalOnTile = up.find(r => r.id !== p.id && r.x === nX && r.y === nY);
+          const isBattleZone = tile.type !== 'hospital' && tile.type !== 'jail';
+          if (isBattleZone && rivalOnTile) { 
+            const defenderIdx = up.indexOf(rivalOnTile);
+            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile, reason: 'occupied' }); 
+            setBattleStep('idle'); 
+          } else { 
+            setSelectedTile(tile); 
+          }
+        }
+      }
+      return up;
+    });
+  }, [movesLeft, turnStarted, currentPlayer, map, victory, staleMate]);
+
+  const nextTurn = useCallback((lastActionMsg) => {
+    if (victory || staleMate) return;
+    setPlayers(prev => {
+      const up = [...prev];
+      let nextIdx = (currentPlayer + 1) % up.length;
+      const finishedPlayer = up[currentPlayer];
+      let updatedHeat = finishedPlayer.committedCrime ? finishedPlayer.heat : Math.max(0, finishedPlayer.heat - 0.5);
+      updatedHeat = Math.round(updatedHeat * 2) / 2;
+      up[currentPlayer] = { ...finishedPlayer, heat: updatedHeat, committedCrime: false };
+      while (up[nextIdx].isEliminated) nextIdx = (nextIdx + 1) % up.length;
+      const nP = up[nextIdx];
+      const inc = getIncome(nP);
+      const infGain = getInfluenceGain(nP);
+      setTicker([`${nP.name}'s turn. +$${inc} / +${infGain} INF.`, lastActionMsg.toUpperCase()]);
+      if (!nP.skipTurn) { 
+        up[nextIdx] = { 
+          ...nP, money: nP.money + inc, influence: nP.influence + infGain,
+          prevX: nP.x, prevY: nP.y 
+        }; 
+      }
+      setCurrentPlayer(nextIdx);
+      setViewedPlayer(nextIdx);
+      return up;
+    });
+    setMovesLeft(0);
+    setTurnStarted(false);
+    setSelectedTile(null);
+    setBattle(null);
+    setBattleStep('idle');
+    setActionOutcome(null);
+    setPinched(null);
+  }, [currentPlayer, victory, staleMate]);
+
+  const startRoll = useCallback(() => {
+    if (turnStarted || isRolling || victory || staleMate) return;
+    const pCurrent = players[currentPlayer];
+    if (pCurrent.skipTurn) { 
+      setPlayers(prev => { const up = [...prev]; up[currentPlayer].skipTurn = false; return up; }); 
+      nextTurn(`${pCurrent.name} released.`); 
+      return; 
+    }
+    setIsRolling(true);
+    let rolls = 0;
+    const interval = setInterval(() => { 
+      setMovesLeft(Math.floor(Math.random() * 6) + 1); 
+      rolls++; 
+      if (rolls > 12) { 
+        clearInterval(interval); 
+        setTurnStarted(true); 
+        setIsRolling(false); 
+      } 
+    }, 60);
+  }, [currentPlayer, isRolling, nextTurn, players, turnStarted, victory, staleMate]);
+
+  const checkPinchThreshold = (currentHeat, increment) => {
+    const projected = Math.round((currentHeat + increment) * 2) / 2;
+    return { isPinched: projected > 5.0, finalHeat: Math.min(5.0, projected) };
+  };
+
+  const resolvePinch = useCallback(() => {
+    if (!pinched) return;
+    const jailTile = map.find(t => t.type === 'jail');
+    triggerVFX('pinch', ((jailTile.x + 0.5) / 8) * 100, ((jailTile.y + 0.5) / 8) * 100);
+    setPlayers(prev => {
+        const up = [...prev]; const p = up[pinched.playerIndex];
+        p.money = Math.max(0, p.money - pinched.fine); p.heat = 0; p.skipTurn = true;
+        p.x = jailTile.x; p.y = jailTile.y; return up;
+    });
+    nextTurn(`${pinched.name} was sentenced.`);
+  }, [pinched, map, triggerVFX, nextTurn]);
+
+  const processBattleResult = useCallback(() => {
+    if (!battle) return;
+    const win = battleWinner;
+    const dIdx = battle.defender;
+    const aIdx = battle.attacker;
+    const tileX = battle.tile.x;
+    const tileY = battle.tile.y;
+    const isLocked = lockedDistricts[battle.tile.dist.id] === players[dIdx].id;
+    let pinchTarget = null;
+    if (win) triggerVFX('cash', ((tileX + 0.5) / 8) * 100, ((tileY + 0.5) / 8) * 100);
+    setPlayers(prev => { 
+        const up = [...prev]; 
+        const { isPinched: atkPinched, finalHeat: atkHeat } = checkPinchThreshold(up[aIdx].heat, 2.0);
+        const { isPinched: defPinched, finalHeat: defHeat } = checkPinchThreshold(up[dIdx].heat, 0.0);
+        up[aIdx].heat = atkHeat;
+        up[aIdx].committedCrime = true;
+        up[dIdx].heat = defHeat;
+        const hospitalTile = map.find(t => t.type === 'hospital');
+        const jailTile = map.find(t => t.type === 'jail');
+        if (win) { 
+            const bounty = Math.floor(up[dIdx].money * 0.3);
+            const raidBounty = Math.floor(up[dIdx].money * 0.25);
+            if (isLocked) {
+                up[aIdx].money += raidBounty;
+                up[dIdx].money = Math.max(0, up[dIdx].money - raidBounty);
+                up[aIdx].influence += 100;
+                up[dIdx].influence -= 100;
+            } else {
+                up[aIdx].money += bounty; 
+                up[dIdx].money = Math.max(0, up[dIdx].money - bounty);
+                up[aIdx].influence += 100; 
+                up[dIdx].influence -= 100; 
+                setMap(oldMap => {
+                  const newMap = [...oldMap];
+                  const tIdx = newMap.findIndex(t => t.x === tileX && t.y === tileY);
+                  if (tIdx !== -1 && newMap[tIdx].type !== 'hospital' && newMap[tIdx].type !== 'jail') {
+                    newMap[tIdx].owner = up[aIdx].id;
+                    if (newMap[tIdx].isHQ) newMap[tIdx].locationName = `${up[aIdx].name} Outpost`;
+                  }
+                  return newMap;
+                });
+            }
+            if (up[dIdx].soldiers > 0) up[dIdx].soldiers -= 1;
+            if (defPinched) {
+              up[dIdx].x = jailTile.x; up[dIdx].y = jailTile.y; up[dIdx].skipTurn = true;
+              up[dIdx].money = Math.max(0, up[dIdx].money - Math.floor(up[dIdx].money * 0.25));
+              up[dIdx].heat = 0;
+              triggerVFX('pinch', ((jailTile.x + 0.5) / 8) * 100, ((jailTile.y + 0.5) / 8) * 100);
+            } else if (up[dIdx].x === tileX && up[dIdx].y === tileY) {
+              up[dIdx].x = hospitalTile.x; up[dIdx].y = hospitalTile.y;
+              triggerVFX('loss', ((hospitalTile.x + 0.5) / 8) * 100, ((hospitalTile.y + 0.5) / 8) * 100);
+            }
+            if (atkPinched) {
+              up[aIdx].x = jailTile.x; up[aIdx].y = jailTile.y; up[aIdx].skipTurn = true; up[aIdx].heat = 0;
+              triggerVFX('pinch', ((jailTile.x + 0.5) / 8) * 100, ((jailTile.y + 0.5) / 8) * 100);
+              pinchTarget = { idx: aIdx, msg: "The operation was successful, but the cops arrived as you were extracting. You're pinched." };
+            }
+        } else { 
+            const extortion = Math.floor(up[aIdx].money * 0.3);
+            up[dIdx].money += extortion; 
+            up[aIdx].money = Math.max(0, up[aIdx].money - extortion);
+            up[aIdx].influence -= 100; up[dIdx].influence += 100; 
+            if (up[aIdx].soldiers > 0) up[aIdx].soldiers -= 1;
+            if (atkPinched) {
+              up[aIdx].x = jailTile.x; up[aIdx].y = jailTile.y; up[aIdx].skipTurn = true; up[aIdx].heat = 0;
+              triggerVFX('pinch', ((jailTile.x + 0.5) / 8) * 100, ((jailTile.y + 0.5) / 8) * 100);
+              pinchTarget = { idx: aIdx, msg: "You were whacked by rivals and then found by the cops during the cleanup. Double blow." };
+            } else {
+              up[aIdx].x = hospitalTile.x; up[aIdx].y = hospitalTile.y;
+              triggerVFX('loss', ((hospitalTile.x + 0.5) / 8) * 100, ((hospitalTile.y + 0.5) / 8) * 100);
+            }
+        } 
+        return up; 
+    });
+    if (pinchTarget) {
+        setPinched({
+            name: players[pinchTarget.idx].name, fine: Math.floor(players[pinchTarget.idx].money * 0.25),
+            playerIndex: pinchTarget.idx, logMsg: pinchTarget.msg, context: "OPERATION PINCHED"
+        });
+    } else {
+        const pAtk = players[aIdx];
+        const isAtkPinch = pAtk.heat + 2.0 > 5.0;
+        const sentenceMsg = (isAtkPinch && !win) ? `${pAtk.name} was defeated and pinched.` : (isAtkPinch && win) ? `${pAtk.name} won and was pinched.` : (win ? `${pAtk.name} crushed ${players[dIdx].name}.` : `${pAtk.name} was hospitalized.`);
+        nextTurn(sentenceMsg);
+    }
+  }, [battle, battleWinner, map, nextTurn, players, lockedDistricts, triggerVFX]);
+
+  useEffect(() => {
+    if (gameState !== 'GAME' || victory || staleMate) return;
+    const pCurrent = players[currentPlayer];
+    if (!pCurrent || !pCurrent.isCPU) return;
+
+    if (pinched) {
+      aiActionTimeoutRef.current = setTimeout(resolvePinch, 2500);
+      return;
+    }
+
+    if (actionOutcome) {
+      aiActionTimeoutRef.current = setTimeout(() => nextTurn(actionOutcome.actionLog), 2000);
+      return;
+    }
+
+    if (battle) {
+      if (battleStep === 'idle') aiActionTimeoutRef.current = setTimeout(executeBattle, 1500);
+      else if (battleStep === 'result') aiActionTimeoutRef.current = setTimeout(processBattleResult, 2500);
+      return;
+    }
+
+    if (!turnStarted && !isRolling) aiActionTimeoutRef.current = setTimeout(startRoll, 1000);
+    else if (turnStarted && movesLeft > 0) {
+      aiActionTimeoutRef.current = setTimeout(() => {
+        const possibleMoves = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }].filter(m => {
+          const nx = pCurrent.x + m.dx; const ny = pCurrent.y + m.dy;
+          return nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE;
+        });
+        const scoredMoves = possibleMoves.map(m => {
+          const nx = pCurrent.x + m.dx; const ny = pCurrent.y + m.dy;
+          const tile = map.find(t => t.x === nx && t.y === ny);
+          let score = 10;
+          if (tile?.type === 'property' && tile.owner === null) score += 20;
+          if (tile?.owner !== null && tile?.owner !== pCurrent.id) score += 5;
+          if (tile?.type === 'hospital' || tile?.type === 'jail') score -= 15;
+          score -= (Math.abs(nx - 3.5) + Math.abs(ny - 3.5));
+          return { ...m, score };
+        });
+        const bestMove = scoredMoves.reduce((prev, curr) => prev.score > curr.score ? prev : curr);
+        movePlayer(bestMove.dx, bestMove.dy);
+      }, 600);
+    }
+    else if (turnStarted && movesLeft === 0 && selectedTile && !actionOutcome && !battle) {
+      aiActionTimeoutRef.current = setTimeout(() => {
+        const p = players[currentPlayer]; const tile = selectedTile;
+        if (tile.type === 'property' && tile.owner === null) {
+          if (p.money >= tile.cost && p.heat < 3) handleAction('buy', tile.cost, 120, 0);
+          else handleAction('muscle', 0, 80, 2.0);
+        } else if (tile.type === 'street') {
+          const rivalOnTile = players.find(r => r.id !== p.id && r.x === tile.x && r.y === tile.y);
+          if (rivalOnTile) {
+            const rivalIndex = players.indexOf(rivalOnTile);
+            setBattle({ attacker: currentPlayer, defender: rivalIndex, tile: selectedTile, reason: 'occupied' });
+          } else {
+            if (p.money >= 150 && p.soldiers < 5) handleAction('recruit', 150, 40, 0);
+            else if (p.money >= 1000) handleAction('arms', 500, 10, 0);
+            else resolveHeist();
+          }
+        } else if (tile.owner !== null && tile.owner !== p.id) {
+          if (tile.type !== 'hospital' && tile.type !== 'jail' && lockedDistricts[tile.dist.id] === null && getPower(p) > getPower(players.find(pl => pl.id === tile.owner))) {
+            const rivalIndex = players.findIndex(pl => pl.id === tile.owner);
+            setBattle({ attacker: currentPlayer, defender: rivalIndex, tile: selectedTile, reason: 'owned' });
+          } else {
+             if (p.money >= 300) handleAction('tribute', 300, 0, 0);
+             else nextTurn(`${p.name} passed.`);
+          }
+        } else nextTurn(`${p.name} passed.`);
+      }, 1000);
+    }
+    return () => clearTimeout(aiActionTimeoutRef.current);
+  }, [gameState, currentPlayer, turnStarted, movesLeft, isRolling, selectedTile, battle, battleStep, actionOutcome, players, map, startRoll, movePlayer, nextTurn, processBattleResult, lockedDistricts, victory, staleMate, pinched, resolvePinch]);
+
+  const handleAction = (type, cost, inf, heatInc) => {
+    if (victory || staleMate) return;
+    const p = players[currentPlayer];
+    const { isPinched, finalHeat } = checkPinchThreshold(p.heat, heatInc);
+    let logMsg = "";
+    if (type === 'buy') logMsg = `${p.name} bought out ${selectedTile.locationName}.`;
+    else if (type === 'muscle') logMsg = `${p.name} muscled in on ${selectedTile.locationName}.`;
+    else if (type === 'recruit') logMsg = `${p.name} recruited a new soldier.`;
+    else if (type === 'arms') logMsg = `${p.name} upgraded their arsenal.`;
+    else if (type === 'tribute') {
+        const ownerId = selectedTile ? selectedTile.owner : (battle ? battle.tile.owner : null);
+        logMsg = `${p.name} paid $300 tribute to ${PLAYER_CONFIGS[ownerId].name}.`;
+    } else if (type === 'withdraw') logMsg = `${p.name} withdrew from the confrontation.`;
+
+    const tileX = selectedTile ? selectedTile.x : p.x;
+    const tileY = selectedTile ? selectedTile.y : p.y;
+    const vfxX = ((tileX + 0.5) / 8) * 100;
+    const vfxY = ((tileY + 0.5) / 8) * 100;
+
+    if (type === 'recruit') triggerVFX('recruit', vfxX, vfxY);
+    if (type === 'arms') triggerVFX('arms', vfxX, vfxY);
+    if (type === 'muscle') triggerVFX('muscle', vfxX, vfxY);
+    if (type === 'buy') triggerVFX('buy', vfxX, vfxY);
+
+    setPlayers(prev => {
+      const up = [...prev]; const player = up[currentPlayer];
+      player.money = Math.max(0, player.money - cost); 
+      player.influence += inf; player.heat = finalHeat;
+      if (heatInc > 0) player.committedCrime = true;
+      if ((type === 'buy' || type === 'muscle') && selectedTile.type === 'property') {
+        setMap(prevMap => {
+          const nm = [...prevMap];
+          const idx = nm.findIndex(t => t.x === player.x && t.y === player.y);
+          if (idx !== -1) nm[idx].owner = player.id;
+          return nm;
+        });
+      } else if (type === 'recruit') player.soldiers++;
+      else if (type === 'arms') player.extraPower += 4;
+      else if (type === 'tribute') {
+          const targetOwnerId = selectedTile ? selectedTile.owner : battle.tile.owner;
+          const ownerIdx = up.findIndex(pl => pl.id === targetOwnerId);
+          if (ownerIdx !== -1) { up[ownerIdx].money += cost; up[ownerIdx].influence += 50; }
+      } else if (type === 'withdraw') { player.x = player.prevX; player.y = player.prevY; }
+      return up;
+    });
+    if (isPinched) {
+      setPinched({ 
+        name: p.name, fine: Math.floor(p.money * 0.25), playerIndex: currentPlayer, 
+        logMsg: `${p.name} was caught! Securing the asset drew too much attention. Off to the precinct.`,
+        context: "RAID BUSTED"
+      });
+      return;
+    }
+    nextTurn(logMsg);
+  };
+
+  const resolveHeist = () => {
+    if (victory || staleMate || actionOutcome) return;
+    const p = players[currentPlayer];
+    const success = Math.random() < 0.45;
+    const heatInc = 1.0; 
+    const { isPinched, finalHeat } = checkPinchThreshold(p.heat, heatInc);
+    const heistReward = Math.floor(Math.random() * 1000) + 1;
+    if (success) {
+      triggerVFX('cash', ((p.x + 0.5) / 8) * 100, ((p.y + 0.5) / 8) * 100);
+      setPlayers(prev => {
+        const up = [...prev];
+        up[currentPlayer].money += heistReward; up[currentPlayer].influence += 50;
+        up[currentPlayer].committedCrime = true; up[currentPlayer].heat = finalHeat;
+        return up;
+      });
+    } else {
+        setPlayers(prev => {
+            const up = [...prev]; up[currentPlayer].heat = finalHeat; up[currentPlayer].committedCrime = true;
+            return up;
+        });
+    }
+    if (isPinched) {
+      setPinched({ 
+        name: p.name, fine: Math.floor(p.money * 0.25), playerIndex: currentPlayer, 
+        logMsg: success ? `The score was huge, but you triggered a silent alarm. Cops caught you with the bag.` : `The vault stayed shut and you were cornered by a tactical unit. You're going to jail.`,
+        context: "HEIST PINCHED"
+      });
+      return;
+    }
+    if (success) {
+      setActionOutcome({ success: true, title: "Heist Successful!", body: `Safe cracked. Secured $${heistReward}. Slipped away into the night.`, actionLog: `${p.name} pulled off a professional heist for $${heistReward}.` });
+    } else {
+      setActionOutcome({ success: false, title: "Heist Failed!", body: "The safe was too tough. You fled before the cops arrived.", actionLog: `${p.name} botched a heist.` });
+    }
+  };
+
+  const executeBattle = () => {
+    setBattleStep('anim');
+    setTimeout(() => {
+      const chance = calculateWinChance(players[battle.attacker], players[battle.defender]);
+      const win = Math.random() < chance;
+      setBattleWinner(win);
+      setBattleStep('result');
+    }, 1500);
+  };
+
+  const pStats = players[viewedPlayer];
+  const pCurrent = players[currentPlayer];
+
+  const handleTouchStart = (e) => { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+  const handleTouchEnd = (e) => {
+    if (!touchStart.current || movesLeft <= 0 || !turnStarted || victory || staleMate) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+    if (Math.abs(dx) > 30 || Math.abs(dy) > 30) {
+      if (Math.abs(dx) > Math.abs(dy)) movePlayer(dx > 0 ? 1 : -1, 0);
+      else movePlayer(0, dy > 0 ? 1 : -1);
+    }
+    touchStart.current = null;
+  };
+
+  if (gameState === 'MENU') {
+    return (
+      <div className="fixed inset-0 bg-zinc-950 flex flex-col items-center justify-center p-4 text-white overflow-y-auto">
+        <div className="w-full max-w-md bg-zinc-900 rounded-3xl border border-white/10 p-6 shadow-2xl">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent mb-1">UNDERWORLD</h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600">Empire Protocol v8.1.0</p>
+          </div>
+          <div className="space-y-4 mb-8">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[10px] font-black uppercase text-zinc-500">Player Setup</span>
+              <div className="flex gap-2">
+                {[2, 3, 4].map(num => (
+                  <button key={num} onClick={() => setSetupConfig(prev => prev.map((p, i) => ({ ...p, active: i < num })))}
+                    className={`px-3 py-1 rounded-md text-xs font-black transition-all ${setupConfig.filter(c => c.active).length === num ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500'}`}>{num}P</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              {setupConfig.map((p, idx) => p.active && (
+                <div key={p.id} className="flex items-center gap-3 bg-black/40 p-3 rounded-2xl border border-white/5">
+                  <div className={`w-3 h-10 rounded-full ${p.color}`} />
+                  <div className="flex-1">
+                    <input type="text" value={p.customName}
+                      onChange={(e) => setSetupConfig(prev => prev.map((item, i) => i === idx ? { ...item, customName: e.target.value } : item))}
+                      className="bg-transparent text-sm font-black uppercase tracking-tight focus:outline-none focus:text-blue-400 w-full" />
+                  </div>
+                  <button onClick={() => setSetupConfig(prev => prev.map((item, i) => i === idx ? { ...item, customName: RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] } : item))}
+                    className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500"><Shuffle size={14}/></button>
+                  <button onClick={() => setSetupConfig(prev => prev.map((item, i) => i === idx ? { ...item, isCPU: !item.isCPU } : item))}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${p.isCPU ? 'bg-zinc-800 text-zinc-400' : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'}`}>
+                    {p.isCPU ? <Cpu size={12}/> : <User size={12}/>}{p.isCPU ? 'CPU' : 'Player'}</button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button onClick={handleLaunch} className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-white/5">
+            <Play size={18} fill="currentColor"/> Launch Empire
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-zinc-950 text-white flex flex-col font-sans overflow-hidden select-none" 
+         onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      
+      {showGuide && (
+        <div className="fixed inset-0 z-[10000] bg-zinc-950/95 flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="w-full max-w-lg bg-zinc-900 border border-white/20 rounded-3xl flex flex-col max-h-[85vh] shadow-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
+                <div className="flex items-center gap-2"><BookOpen size={20} className="text-blue-400" /><h2 className="text-sm font-black uppercase tracking-widest">Empire Strategy Guide</h2></div>
+                <button onClick={() => setShowGuide(false)} className="p-2 hover:bg-zinc-800 rounded-full text-zinc-400"><X size={20}/></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-zinc-300 font-medium">
+                <section>
+                  <h3 className="text-white font-black uppercase text-xs tracking-wider mb-2 border-l-2 border-blue-500 pl-2">1. The Objective</h3>
+                  <p className="text-xs leading-relaxed">Achieve a <span className="text-white font-bold">City Takeover</span> by locking all four districts. If the city is carved up and all districts are locked by different players, the winner is determined by <span className="text-amber-400 font-bold">Influence</span>.</p>
+                </section>
+                <section>
+                  <h3 className="text-white font-black uppercase text-xs tracking-wider mb-2 border-l-2 border-blue-500 pl-2">2. Heat & The Law</h3>
+                  <p className="text-xs leading-relaxed">Aggressive actions like "Muscle In" or "Heists" increase <span className="text-red-500 font-bold">Heat</span>. If Heat exceeds <span className="text-white font-bold">5.0</span>, you are Pinched—sent to jail, skipping a turn and paying heavy fines. Heat decays slowly (0.5/turn) if you stay clean.</p>
+                </section>
+                <section>
+                  <h3 className="text-white font-black uppercase text-xs tracking-wider mb-2 border-l-2 border-blue-500 pl-2">3. Locking Turf</h3>
+                  <p className="text-xs leading-relaxed">Own every property in a district to <span className="text-amber-400 font-bold">Lock</span> it. Locked turf cannot be muscled or bought out. Rivals must <span className="italic">Raid</span> you to steal cash and influence, but they cannot take the property while it remains locked.</p>
+                </section>
+                <section>
+                  <h3 className="text-white font-black uppercase text-xs tracking-wider mb-2 border-l-2 border-blue-500 pl-2">4. Combat Power</h3>
+                  <p className="text-xs leading-relaxed">Winning battles depends on <span className="text-cyan-400 font-bold">Power (PWR)</span>, which is your Crew + Armaments. High influence also provides a tactical edge in calculations. Losing a battle often sends you to Mercy Hospital.</p>
+                </section>
+                <section>
+                  <h3 className="text-white font-black uppercase text-xs tracking-wider mb-2 border-l-2 border-blue-500 pl-2">5. Street Hustles</h3>
+                  <ul className="text-[11px] space-y-2">
+                    <li><span className="text-white font-bold">Recruit:</span> Increase crew for +$20 income and +1 Power.</li>
+                    <li><span className="text-white font-bold">Arms:</span> High-cost upgrade for +4 Power.</li>
+                    <li><span className="text-white font-bold">Heist:</span> High risk, high reward cash grab.</li>
+                  </ul>
+                </section>
+              </div>
+              <div className="p-4 bg-black/40 border-t border-white/10">
+                 <button onClick={() => setShowGuide(false)} className="w-full bg-white text-black py-3 rounded-xl font-black uppercase text-xs">Got it, Boss</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      <div className="bg-black border-b border-white/10 p-1 shrink-0 z-[100]">
+        <div className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}>
+          {players.map((p, idx) => (
+            <button key={p.id} onClick={() => setViewedPlayer(idx)} className={`p-1.5 rounded-lg flex flex-col items-center border transition-all ${viewedPlayer === idx ? 'bg-zinc-800 border-white/40 shadow-sm' : 'border-transparent opacity-50'}`}>
+              <div className="flex items-center gap-1">
+                <span className={`text-[8px] font-black uppercase tracking-tighter ${p.text}`}>{p.name}</span>
+                {idx === currentPlayer && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+              </div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Crown size={8} className="text-amber-500" /><span className="text-[10px] font-black text-white">{p.influence}</span>
+                <span className="text-[10px] font-black text-emerald-500 ml-1">${p.money}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-zinc-900/50 p-2 border-b border-white/5 shrink-0 z-[100]">
+        <div className="grid grid-cols-7 gap-1 max-w-lg mx-auto text-center">
+          <div><Crown size={12} className="mx-auto text-amber-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">INF</p><span className="text-[10px] font-black">{pStats?.influence || 0}</span></div>
+          <div><Briefcase size={12} className="mx-auto text-emerald-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CASH</p><span className="text-[10px] font-black">${pStats?.money || 0}</span></div>
+          <div><Landmark size={12} className="mx-auto text-emerald-600"/><p className="text-[7px] font-black text-zinc-500 uppercase">INC</p><span className="text-[10px] font-black">${getIncome(pStats)}</span></div>
+          <div><Building2 size={12} className="mx-auto text-rose-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">TURF</p><span className="text-[10px] font-black">{pStats?.properties || 0}</span></div>
+          <div><Users size={12} className="mx-auto text-blue-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CREW</p><span className="text-[10px] font-black">{(pStats?.soldiers || 0)+1}</span></div>
+          <div><Crosshair size={12} className="mx-auto text-cyan-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">PWR</p><span className="text-[10px] font-black">{getPower(pStats)}</span></div>
+          <div><ShieldAlert size={12} className={`mx-auto ${getHeatColor(pStats?.heat || 0)}`}/><p className="text-[7px] font-black text-zinc-500 uppercase">HEAT</p><span className={`text-[10px] font-black ${getHeatColor(pStats?.heat || 0)}`}>{(pStats?.heat || 0).toFixed(1)}/5.0</span></div>
+        </div>
+      </div>
+
+      <div className="w-full p-2 flex justify-center shrink-0">
+        <div className="w-full max-w-md flex items-center gap-3 bg-zinc-900/80 p-2.5 rounded-2xl border border-white/10 shadow-lg">
+          <button onClick={startRoll} disabled={pCurrent?.isCPU || !!victory || !!staleMate}
+            className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center font-black shadow-xl active:scale-95 shrink-0 ${pCurrent?.skipTurn ? 'bg-red-950 text-red-500 border-red-500' : turnStarted ? pCurrent?.color : 'bg-white text-black'}`}>
+            <span className="text-[8px] uppercase tracking-tighter opacity-70">{pCurrent?.skipTurn ? 'SENTENCE' : turnStarted ? 'MOVES' : 'ROLL'}</span>
+            <span className="text-2xl">{isRolling || (turnStarted && !pCurrent?.skipTurn) ? movesLeft : <Dices size={22}/>}</span>
+          </button>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-[11px] font-black uppercase text-white tracking-wider truncate">{ticker[0]}</p>
+            <p className="text-[9px] font-bold text-zinc-500 uppercase mt-0.5 leading-tight line-clamp-2">{ticker[1]}</p>
+          </div>
+          <button onClick={() => setShowGuide(true)} className="w-10 h-10 rounded-full flex items-center justify-center bg-zinc-800 text-zinc-400 border border-white/5 active:bg-zinc-700 transition-colors shrink-0" title="Open Strategy Guide"><BookOpen size={18}/></button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-0 relative touch-none">
+        <div className="w-full aspect-square max-w-[min(100%,440px)] bg-zinc-900 p-1 rounded-2xl border-4 border-zinc-800 relative shadow-2xl overflow-hidden">
+          <div className="absolute inset-0 z-[500] pointer-events-none">
+            {particles.map(p => (
+              <FloatingVFX key={p.id} x={p.x} y={p.y} type={p.type} onComplete={() => setParticles(prev => prev.filter(item => item.id !== p.id))} />
+            ))}
+          </div>
+          <div className="absolute inset-0 pointer-events-none z-[1] p-1">
+             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="50" y1="0" x2="50" y2="100" stroke="rgba(255,255,255,0.25)" strokeWidth="0.4" strokeDasharray="2, 2" />
+                <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.4" strokeDasharray="2, 2" />
+             </svg>
+          </div>
+          <div className="grid grid-cols-8 grid-rows-8 gap-0.5 h-full w-full relative z-[5]">
+            {map.map(t => {
+              const pHere = players.filter(p => p.x === t.x && p.y === t.y);
+              const owner = (t.owner !== null && t.type !== 'street' && t.type !== 'hospital' && t.type !== 'jail') ? PLAYER_CONFIGS.find(cfg => cfg.id === t.owner) : null;
+              const isLocked = lockedDistricts[t.dist.id] !== null;
+              const lockOwner = isLocked ? PLAYER_CONFIGS.find(cfg => cfg.id === lockedDistricts[t.dist.id]) : null;
+              return (
+                <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
+                  ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' opacity-50'}
+                  ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
+                  ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-100' : ''}
+                  ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-100' : ''}`}
+                  style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
+                  {t.type === 'hospital' && <MedicalCrossIcon size={16} className="text-red-500/80" />}
+                  {t.type === 'jail' && <JailBarsIcon size={20} className="text-zinc-400" />}
+                  {t.icon && <div className={`opacity-80 scale-90 sm:scale-100 ${owner ? 'text-white/40' : 'text-white'}`}>{t.icon}</div>}
+                  {t.isHQ && <div className="absolute inset-0 flex items-center justify-center"><Landmark size={20} className="opacity-20 text-white" /></div>}
+                  {isLocked && t.type === 'property' && <div className="absolute top-0.5 right-0.5 opacity-60"><Lock size={8}/></div>}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {pHere.map(p => <MobsterToken key={p.id} ring={p.ring} isCurrent={players[currentPlayer]?.id === p.id} soldiers={p.soldiers} movesLeft={movesLeft} turnStarted={turnStarted} onMove={movePlayer} />)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {victory && (
+            <div className="absolute inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-amber-500 mx-1 my-1 shadow-[0_0_50px_rgba(245,158,11,0.3)] animate-in fade-in zoom-in duration-500">
+              <div className="relative mb-6"><Trophy size={80} className="text-amber-500 animate-bounce" /><Crown size={32} className="text-white absolute -top-4 -right-4 rotate-12" /></div>
+              <h2 className="text-4xl font-black uppercase italic mb-2 tracking-tighter text-white">CITY TAKEOVER</h2>
+              <div className={`px-4 py-1 rounded-full ${victory.color} mb-4`}><span className="text-sm font-black uppercase tracking-widest">{victory.name} EMPIRE</span></div>
+              <p className="text-zinc-300 text-sm mb-8 leading-snug max-w-[240px]">Every neighborhood is under your lock and key. The streets are yours. The city has fallen.</p>
+              <button onClick={() => setGameState('MENU')} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95 shadow-xl shadow-white/10">Return to Shadows</button>
+            </div>
+          )}
+
+          {staleMate && (
+            <div className="absolute inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-6 text-center rounded-2xl border-4 border-zinc-600 mx-1 my-1 animate-in fade-in duration-500">
+              <h2 className="text-3xl font-black uppercase italic mb-1 tracking-tighter text-white">CONSOLIDATED CONTROL</h2>
+              <p className="text-zinc-400 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">The city is fully carved up. No territory remains.</p>
+              <div className="w-full space-y-2 mb-6 max-h-[220px] overflow-y-auto pr-2">
+                {winningOrder.map((p, idx) => (
+                  <div key={p.id} className={`flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${idx === 0 ? 'border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-white/5'}`}>
+                    <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-zinc-800 text-xs font-black">
+                       {idx === 0 ? <Medal size={16} className="text-amber-500"/> : idx + 1}
+                    </div>
+                    <div className="flex-1 text-left">
+                       <p className={`text-[10px] font-black uppercase ${p.text}`}>{p.name}</p>
+                       <p className="text-[12px] font-black text-white">{p.influence} <span className="text-[8px] text-zinc-500 ml-1">INF</span></p>
+                    </div>
+                    {idx === 0 && <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter">THE DON</span>}
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setGameState('MENU')} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95">End Operations</button>
+            </div>
+          )}
+
+          {pinched && (
+             <div className="absolute inset-0 z-[5000] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-red-500 mx-1 my-1">
+                <Gavel size={48} className="text-white mb-4 animate-bounce"/><h2 className="text-3xl font-black uppercase italic mb-1">Pinched!</h2>
+                <p className="text-red-400 text-[10px] font-black mb-1 tracking-widest uppercase">{pinched.context}</p>
+                <p className="text-white/80 text-sm mb-4 leading-snug">{pinched.logMsg}</p>
+                <div className="bg-black/40 p-4 rounded-xl w-full mb-6 border border-white/10">
+                   <div className="flex justify-between text-xs font-black mb-1 text-red-400"><span>Legal Fees:</span><span>-${pinched.fine}</span></div>
+                   <div className="flex justify-between text-xs font-black text-red-400"><span>Sentence:</span><span>Relocate to Jail & Skip Turn</span></div>
+                </div>
+                <button onClick={resolvePinch} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95">Serve Your Time</button>
+             </div>
+          )}
+
+          {battle && (
+            <div className="absolute inset-0 z-[2000] bg-black/95 flex flex-col p-4 text-center rounded-2xl border-4 border-red-600 overflow-y-auto mx-1 my-1">
+              {battleStep === 'idle' && (
+                <>
+                  <Skull size={32} className="text-red-600 mx-auto mb-1 animate-pulse"/><h2 className="text-xl font-black uppercase italic text-white mb-2 underline decoration-red-600 decoration-2 tracking-widest">Attack Rival</h2>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {[battle.attacker, battle.defender].map((pid, idx) => {
+                      const p = players[pid]; const power = getPower(p);
+                      const winChance = idx === 0 ? calculateWinChance(players[battle.attacker], players[battle.defender]) : 1 - calculateWinChance(players[battle.attacker], players[battle.defender]);
+                      const odds = Math.round(winChance * 100);
+                      return (
+                        <div key={pid} className={`p-2 rounded-xl bg-zinc-900 border ${idx === 0 ? 'border-blue-500/50' : 'border-red-500/50'} flex flex-col items-center relative overflow-hidden`}>
+                          <p className={`text-[8px] font-black uppercase mb-1 ${p.text}`}>{idx === 0 ? 'Attacker' : 'Defender'}</p>
+                          <p className="text-[11px] font-black text-white leading-none mb-2">{p.name}</p>
+                          <div className="w-full space-y-1 z-10">
+                            <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">INF</span><span className="text-amber-500 font-black">{p.influence}</span></div>
+                            <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">CREW</span><span className="text-blue-400 font-black">{p.soldiers + 1}</span></div>
+                            <div className="flex justify-between text-[10px] pt-1 border-t border-white/5"><span className="text-zinc-400 font-bold uppercase tracking-tighter">PWR</span><span className="text-white font-black">{power}</span></div>
+                          </div>
+                          <div className={`mt-2 text-[11px] font-black ${idx === 0 ? 'text-blue-400' : 'text-red-400'} animate-pulse`}>{odds}% WIN</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mb-3 p-2 bg-red-600/20 border border-red-600/40 rounded-lg"><p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Heat Projection</p><p className="text-[10px] text-white/80 font-bold">Attacker: +2.0 Heat</p></div>
+                  {!players[battle.attacker].isCPU ? (
+                    <>
+                      <button onClick={executeBattle} className="w-full bg-red-600 py-3 rounded-xl font-black uppercase text-sm mb-2 shadow-lg shadow-red-950 active:scale-95 transition-transform">Hit ‘Em!</button>
+                      {battle.tile.owner !== null && battle.tile.owner !== players[battle.attacker].id ? (
+                        <button disabled={players[battle.attacker].money < 300} onClick={() => handleAction('tribute', 300, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all ${players[battle.attacker].money >= 300 ? 'bg-zinc-800 text-white border-white/20 active:scale-95' : 'bg-zinc-900 text-zinc-600 border-transparent opacity-50 cursor-not-allowed'}`}>Pay $300 Tribute</button>
+                      ) : (
+                        <button onClick={() => handleAction('withdraw', 0, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all bg-zinc-800 text-white border-white/20 active:scale-95 flex items-center justify-center gap-2`}><Undo2 size={14}/> Withdraw to Start</button>
+                      )}
+                    </>
+                  ) : (<div className="w-full py-4 text-amber-500 font-black animate-pulse italic uppercase tracking-widest">CPU is initiating strike...</div>)}
+                </>
+              )}
+              {battleStep === 'anim' && (
+                <div className="flex-1 flex flex-col items-center justify-center"><Flame size={48} className="text-orange-500 animate-bounce mb-4"/><h2 className="text-2xl font-black italic animate-pulse tracking-tighter">WAR IN THE STREETS...</h2></div>
+              )}
+              {battleStep === 'result' && (
+                <div className="flex-1 flex flex-col items-center justify-center p-2">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${battleWinner ? 'bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.6)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)]'}`}>{battleWinner ? <Crown size={32}/> : <Skull size={32}/>}</div>
+                  <h2 className="text-2xl font-black uppercase italic mb-1">{battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Victory but Pinched!' : 'Victory!') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Defeated and Pinched!' : 'Defeat!')}</h2>
+                  <div className="bg-zinc-900 w-full p-4 rounded-2xl my-4 border border-white/10 text-left overflow-y-auto max-h-[140px]">
+                    <p className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-tighter">Results:</p>
+                    {battleWinner ? (
+                      <div className="space-y-1 text-xs text-zinc-200">
+                        <div className="flex justify-between font-black"><span className="text-emerald-500">+100 Influence</span></div>
+                        <div className="flex justify-between font-black"><span className="text-emerald-500">+$ {Math.floor(players[battle.defender].money * (lockedDistricts[battle.tile.dist.id] !== null ? 0.25 : 0.3))} Bounty</span></div>
+                        <div className="flex justify-between font-black"><span className="text-red-500">-100 Rival Influence</span></div>
+                        {players[battle.defender].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">Whacked 1 rival soldier</span></div>}
+                        {lockedDistricts[battle.tile.dist.id] === players[battle.defender].id ? (
+                            <div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-amber-400 font-black italic uppercase text-[9px]">Hood Locked - Turf Retained by Rival</span></div>
+                        ) : battle.tile.isHQ && (<div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-blue-400 font-black italic uppercase text-[9px]">Stronghold Captured</span></div>)}
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-xs text-zinc-200">
+                        <div className="flex justify-between font-black"><span className="text-red-500">-100 Influence</span></div>
+                        <div className="flex justify-between font-black"><span className="text-red-500">-$ {Math.floor(players[battle.attacker].money * 0.3)} Extorted</span></div>
+                        {players[battle.attacker].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">1 soldier whacked in battle</span></div>}
+                      </div>
+                    )}
+                  </div>
+                  {!players[battle.attacker].isCPU ? (
+                    <button onClick={processBattleResult} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
+                      {battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Claim Victory') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Recover in the Hospital')}
+                    </button>
+                  ) : (<div className="w-full py-4 text-zinc-500 font-black italic uppercase text-xs">Processing After-Action...</div>)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {actionOutcome && (
+            <div className="absolute inset-0 z-[4000] bg-black/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-white/20 mx-1 my-1">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${actionOutcome.success ? 'bg-emerald-600 shadow-[0_0_20px_rgba(5,150,105,0.4)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.4)]'}`}>{actionOutcome.success ? <Briefcase size={32}/> : <ShieldAlert size={32}/>}</div>
+              <h2 className="text-2xl font-black uppercase italic mb-2">{actionOutcome.title}</h2>
+              <p className="text-zinc-400 text-xs mb-6">{actionOutcome.body}</p>
+              <button onClick={() => nextTurn(actionOutcome.actionLog)} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase">Continue</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="w-full p-2 flex justify-center shrink-0 mb-4">
+        <div className="w-full max-w-md h-[160px]">
+          {selectedTile ? (
+            <div className="bg-zinc-900 border-2 border-white/15 rounded-3xl p-3.5 flex flex-col gap-3 shadow-2xl h-full">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xs font-black uppercase text-white/90">{selectedTile.locationName}</h3>
+                  <div className="flex items-center gap-1 mt-0.5 opacity-60">
+                    <MapPin size={10}/><p className="text-[10px] uppercase font-black">{selectedTile.dist.name}</p>
+                    {lockedDistricts[selectedTile.dist.id] !== null && selectedTile.type === 'property' && <span className="text-[8px] bg-white text-black px-1 ml-1 rounded">LOCKED</span>}
+                  </div>
+                </div>
+                {selectedTile.owner !== null && selectedTile.owner !== players[currentPlayer]?.id ? (
+                    <button disabled={pCurrent?.isCPU || pCurrent?.money < 300 || !!victory || !!staleMate}
+                        onClick={() => handleAction('tribute', 300, 0, 0)} 
+                        className={`text-[9px] font-black uppercase px-3 py-1.5 rounded-full border active:scale-95 transition-all
+                        ${pCurrent?.money >= 300 ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-950/40' : 'bg-zinc-800 text-zinc-500 border-white/5 cursor-not-allowed opacity-50'}`}>Pay $300 Tribute</button>
+                ) : (
+                    <button disabled={pCurrent?.isCPU || !!victory || !!staleMate} onClick={() => nextTurn(`${players[currentPlayer].name} passed.`)} 
+                        className="text-[9px] font-black uppercase bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full border border-white/10 active:bg-zinc-700">Skip Turn</button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 flex-1 items-stretch">
+                {(selectedTile.type === 'hospital' || selectedTile.type === 'jail') && (<div className="col-span-2 bg-zinc-800/20 rounded-xl flex items-center justify-center text-[10px] font-black uppercase text-zinc-600 border border-dashed border-white/5 italic text-center">{selectedTile.type === 'hospital' ? 'Public Health Zone — No Operations' : 'High Security Zone — No Operations'}</div>)}
+                {selectedTile.type === 'property' && selectedTile.owner === null && (
+                  <>
+                    <button disabled={pCurrent?.isCPU || pCurrent?.money < selectedTile.cost || !!victory || !!staleMate} onClick={() => handleAction('buy', selectedTile.cost, 120, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < selectedTile.cost ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-emerald-700/80 border-emerald-950'}`}>
+                      <span className="text-[10px] font-black uppercase">Buy Out</span>
+                      <div className="flex flex-wrap justify-center gap-1.5"><StatChange icon={Briefcase} value={`-${selectedTile.cost}`} color="text-red-300" /><StatChange icon={Crown} value="+120" color="text-amber-300" /><StatChange icon={TrendingUp} value="+$100" color="text-emerald-300" /></div>
+                    </button>
+                    <button disabled={pCurrent?.isCPU || !!victory || !!staleMate} onClick={() => handleAction('muscle', 0, 80, 2.0)} className="bg-red-800/80 p-2 rounded-xl border-b-4 border-red-950 flex flex-col items-center justify-center gap-1 active:translate-y-1">
+                      <span className="text-[10px] font-black uppercase">Muscle In</span>
+                      <div className="flex wrap justify-center gap-1.5"><StatChange icon={ShieldAlert} value="+2.0" color="text-red-400" /><StatChange icon={Crown} value="+80" color="text-amber-300" /><StatChange icon={TrendingUp} value="+$100" color="text-emerald-300" /></div>
+                    </button>
+                  </>
+                )}
+                {selectedTile.type === 'street' && (
+                  <div className="col-span-2 grid grid-cols-3 gap-2 h-full">
+                    <button disabled={pCurrent?.isCPU || pCurrent?.money < 150 || !!victory || !!staleMate} onClick={() => handleAction('recruit', 150, 40, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 150 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-blue-700/80 border-blue-950'}`}>
+                      <span className="text-[10px] font-black uppercase">Recruit</span>
+                      <div className="flex flex-col items-center"><StatChange icon={Briefcase} value="-150" color="text-red-300" /><StatChange icon={Users} value="+1 Crew" color="text-blue-300" /><StatChange icon={TrendingUp} value={`+$${INCOME_PER_CREW}`} color="text-emerald-400" /></div>
+                    </button>
+                    <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate} onClick={() => handleAction('arms', 500, 10, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 500 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-cyan-700/80 border-cyan-950'}`}>
+                      <span className="text-[10px] font-black uppercase">Buy Arms</span>
+                      <div className="flex flex-col items-center"><StatChange icon={Briefcase} value="-500" color="text-red-300" /><StatChange icon={Crosshair} value="+4 PWR" color="text-white" /></div>
+                    </button>
+                    <button disabled={pCurrent?.isCPU || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
+                      <span className="text-[10px] font-black uppercase">Pull Heist</span>
+                      <div className="flex flex-col items-center"><StatChange icon={ShieldAlert} value="+1.0" color="text-orange-400" /><StatChange icon={Target} value="45%" color="text-amber-200" /><StatChange icon={Briefcase} value="+$???" color="text-emerald-300" /></div>
+                    </button>
+                  </div>
+                )}
+                {((selectedTile.owner !== null && selectedTile.owner !== pCurrent.id) || players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y)) && (
+                  <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
+                    onClick={() => {
+                        const rivalOnTile = players.find(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y);
+                        const defenderIdx = rivalOnTile ? players.indexOf(rivalOnTile) : players.findIndex(p => p.id === selectedTile.owner);
+                        setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: rivalOnTile ? 'occupied' : 'owned' });
+                        setBattleStep('idle');
+                    }} 
+                    className={`col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all
+                    ${(pCurrent?.isCPU || !!victory || !!staleMate) ? 'bg-zinc-700 opacity-50 border-zinc-900 cursor-not-allowed' : (lockedDistricts[selectedTile.dist.id] !== null ? 'bg-red-800 border-red-950' : 'bg-gradient-to-r from-red-900 to-red-600')}`}>
+                    <div className="flex items-center gap-2">{lockedDistricts[selectedTile.dist.id] !== null ? <Flame size={18}/> : <Skull size={18}/>} 
+                        {players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) ? 'Attack Rival' : (lockedDistricts[selectedTile.dist.id] !== null ? 'Raid Rival' : 'Muscle In')}
+                    </div>
+                    {lockedDistricts[selectedTile.dist.id] !== null && <span className="text-[8px] text-white/70 font-bold opacity-80">WIN TO STEAL 25% CASH</span>}
+                  </button>
+                )}
+                {selectedTile.owner === players[currentPlayer]?.id && !players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) && (
+                  <div className="col-span-2 bg-zinc-800/40 rounded-xl flex items-center justify-center text-[10px] font-black uppercase text-zinc-500 border border-dashed border-white/10 italic">Your Stronghold</div>
+                )}
+              </div>
+            </div>
+          ) : (<div className="bg-zinc-900/10 border-2 border-dashed border-white/5 rounded-3xl h-full flex flex-col items-center justify-center opacity-30 text-zinc-500"><Wind size={24} className="mb-1"/><p className="text-[10px] font-black uppercase tracking-[0.4em]">Establish Control</p></div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
