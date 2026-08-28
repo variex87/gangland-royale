@@ -227,13 +227,7 @@
         audio.play().catch(e => console.log('Audio playback status:', e));
       }, []);
 
-      const unlockAudio = useCallback(() => {
-        const dummy = new Audio(Array.isArray(SFX.dice) ? SFX.dice[0] : SFX.dice);
-        dummy.play().then(() => {
-          dummy.pause();
-          dummy.currentTime = 0;
-        }).catch(() => {});
-      }, []);
+  
 
       const [gameState, setGameState] = useState('MENU');
       const [setupConfig, setSetupConfig] = useState(
@@ -417,15 +411,7 @@
       };
 
       const handleLaunch = () => {
-
-        // Unlocks browser audio policy for subsequent CPU turns
-    const dummyAudio = new Audio('./Dice-1.wav');
-    dummyAudio.play().then(() => {
-      dummyAudio.pause();
-      dummyAudio.currentTime = 0;
-    }).catch(() => {});
         
-        unlockAudio();
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
         const initialPlayers = activeConfigs.map((c, idx) => ({
@@ -529,7 +515,7 @@
             setIsRolling(false); 
           } 
         }, 60);
-      }, [currentPlayer, isRolling, nextTurn, players, turnStarted, victory, staleMate, playSound, unlockAudio]);
+      }, [currentPlayer, isRolling, nextTurn, players, turnStarted, victory, staleMate, playSound);
 
       const checkPinchThreshold = (currentHeat, increment) => {
         const projected = Math.round((currentHeat + increment) * 2) / 2;
