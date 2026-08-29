@@ -1232,22 +1232,37 @@
                         </button>
                       </div>
                     )}
-                    {((selectedTile.owner !== null && selectedTile.owner !== pCurrent.id) || players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y)) && (
-                      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
-                        onClick={() => {
-                            const rivalOnTile = players.find(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y);
-                            const defenderIdx = rivalOnTile ? players.indexOf(rivalOnTile) : players.findIndex(p => p.id === selectedTile.owner);
-                            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: rivalOnTile ? 'occupied' : 'owned' });
-                            setBattleStep('idle');
-                        }} 
-                        className={`col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all
-                        ${(pCurrent?.isCPU || !!victory || !!staleMate) ? 'bg-zinc-700 opacity-50 border-zinc-900 cursor-not-allowed' : (lockedDistricts[selectedTile.dist.id] !== null ? 'bg-red-800 border-red-950' : 'bg-gradient-to-r from-red-900 to-red-600')}`}>
-                        <div className="flex items-center gap-2">{lockedDistricts[selectedTile.dist.id] !== null ? <Icon name="flame" size={18}/> : <Icon name="skull" size={18}/>} 
-                            {players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) ? 'Attack Rival' : (lockedDistricts[selectedTile.dist.id] !== null ? 'Raid Rival' : 'Muscle In')}
-                        </div>
-                        {lockedDistricts[selectedTile.dist.id] !== null && <span className="text-[8px] text-white/70 font-bold opacity-80">WIN TO STEAL 25% CASH</span>}
-                      </button>
-                    )}
+
+                    
+                    {selectedTile.owner !== null && selectedTile.owner !== pCurrent.id && (
+  <>
+    {lockedDistricts[selectedTile.dist.id] === null ? (
+      // RULE 1: Unlocked Property -> Direct Attack or Tribute
+      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
+        onClick={() => {
+            const defenderIdx = players.findIndex(p => p.id === selectedTile.owner);
+            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: 'owned' });
+            setBattleStep('idle');
+        }} 
+        className="col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black bg-gradient-to-r from-red-900 to-red-600 active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all">
+        <div className="flex items-center gap-2"><Icon name="skull" size={18}/> Attack Rival</div>
+      </button>
+    ) : (
+      // RULE 2: Locked District Property -> Option to Muscle In (Raid)
+      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
+        onClick={() => {
+            const defenderIdx = players.findIndex(p => p.id === selectedTile.owner);
+            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: 'owned' });
+            setBattleStep('idle');
+        }} 
+        className="col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black bg-red-800 border-red-950 active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all">
+        <div className="flex items-center gap-2"><Icon name="flame" size={18}/> Muscle In (Raid)</div>
+        <span className="text-[8px] text-white/70 font-bold opacity-80">WIN TO STEAL 25% CASH</span>
+      </button>
+    )}
+  </>
+)}
+                    
                     {selectedTile.owner === players[currentPlayer]?.id && !players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) && (
                       <div className="col-span-2 bg-zinc-800/40 rounded-xl flex items-center justify-center text-[10px] font-black uppercase text-zinc-500 border border-dashed border-white/10 italic">Your Stronghold</div>
                     )}
