@@ -508,10 +508,6 @@
 
         playSound('dice');
         
-        // ADD THESE 3 LINES RIGHT HERE TO FORCE CPU AUDIO:
-  const cpuAudio = new Audio('./Dice-1.wav');
-  cpuAudio.currentTime = 0;
-  cpuAudio.play().catch(e => console.log('CPU Audio block:', e));
 
         setIsRolling(true);
         let rolls = 0;
