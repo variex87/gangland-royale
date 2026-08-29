@@ -224,13 +224,15 @@
           fileUrl = item;
         }
 
-        const audio = new Audio();
-        audio.src = fileUrl;
-        audio.load();
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.log("Audio restriction bypassed:", error);
+       // Play the pre-warmed audio file instantly
+        const audio = new Audio(fileUrl);
+        audio.currentTime = 0;
+        const promise = audio.play();
+        if (promise !== undefined) {
+          promise.catch(error => {
+            // Mobile fallback if blocked
+            audio.load();
+            audio.play().catch(err => console.log("Audio play error:", err));
           });
         }
       }, []);
@@ -418,6 +420,20 @@
       };
 
       const handleLaunch = () => {
+        
+        // --- MOBILE AUDIO AWAKENING ---
+        // This runs instantly when you tap "Launch Empire", 
+        // forcing the mobile browser to trust all your sound files!
+        Object.values(SFX).flat().forEach(url => {
+          const warmAudio = new Audio(url);
+          warmAudio.load();
+          warmAudio.play().then(() => {
+            warmAudio.pause();
+            warmAudio.currentTime = 0;
+          }).catch(e => {});
+        });
+        // ------------------------------
+        
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
         const initialPlayers = activeConfigs.map((c, idx) => ({
