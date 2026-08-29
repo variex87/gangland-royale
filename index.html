@@ -206,7 +206,9 @@
 
       const lastSfxIndices = useRef({});
 
-     const playSound = useCallback((key) => {
+     const audioBuffersRef = useRef({});
+
+      const playSound = useCallback(async (key) => {
         const item = SFX[key];
         if (!item) return;
 
@@ -224,27 +226,39 @@
           fileUrl = item;
         }
 
-        // Create a temporary audio element and force it into the DOM execution queue
         try {
-          const audio = document.createElement('audio');
-          audio.src = fileUrl;
-          audio.preload = 'auto';
-          document.body.appendChild(audio);
-          
-          audio.play().then(() => {
-            // Clean up element after it finishes playing to keep memory clean
-            audio.onended = () => {
-              audio.remove();
-            };
-          }).catch(err => {
-            // Fallback for strict mobile CPU threads
-            audio.load();
-            audio.play().catch(e => {
-              audio.remove();
-            });
-          });
+          // Ensure AudioContext is active
+          if (!window._audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) window._audioCtx = new AudioContextClass();
+          }
+          const ctx = window._audioCtx;
+          if (ctx && ctx.state === 'suspended') {
+            await ctx.resume();
+          }
+
+          // Fetch and cache audio buffer once, then play instantly anytime (even on CPU timers)
+          if (!audioBuffersRef.current[fileUrl]) {
+            const response = await fetch(fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+            audioBuffersRef.current[fileUrl] = decodedBuffer;
+          }
+
+          const buffer = audioBuffersRef.current[fileUrl];
+          if (buffer && ctx) {
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            source.start(0);
+          }
         } catch (e) {
-          console.log("Audio exception:", e);
+          console.log("Web Audio fallback trigger:", e);
+          // Fallback to standard HTML5 audio if fetch fails
+          try {
+            const fallback = new Audio(fileUrl);
+            fallback.play().catch(() => {});
+          } catch(err) {}
         }
       }, []);
 
@@ -432,6 +446,15 @@
       };
 
       const handleLaunch = () => {
+
+        // UNLOCKS MASTER AUDIO CHANNEL FOR MOBILE CPU TURNS
+        if (!window._audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) window._audioCtx = new AudioContextClass();
+        }
+        if (window._audioCtx && window._audioCtx.state === 'suspended') {
+          window._audioCtx.resume();
+        }
                
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
