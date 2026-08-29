@@ -818,6 +818,26 @@
         const heatInc = 1.0; 
         const { isPinched, finalHeat } = checkPinchThreshold(p.heat, heatInc);
         const heistReward = Math.floor(Math.random() * 1000) + 1;
+
+        // VARIETY OF SUCCESS SCENARIOS
+        const successStories = [
+          { title: "Heist Successful!", body: `Safe cracked cleanly. Secured $${heistReward}. Slipped away into the night.` },
+          { title: "Bank Truck Ambushed!", body: `Intercepted a federal cash transport. Looted $${heistReward} before backup arrived.` },
+          { title: "Jewelry Store Sweep!", body: `Cleaned out the downtown showroom. Flipped the diamonds for $${heistReward}.` },
+          { title: "Dockside Smuggling Run!", body: `Intercepted a container full of untracked cash. Pocketed $${heistReward}.` }
+        ];
+
+        // VARIETY OF FAILURE SCENARIOS
+        const failStories = [
+          { title: "Heist Failed!", body: "The safe was too tough. You fled into the shadows before the cops arrived." },
+          { title: "Ambushed!", body: "Rival mobsters were waiting. You had to ditch the loot and run empty-handed." },
+          { title: "Bad Intel!", body: "The warehouse was empty. You wasted the night for nothing." },
+          { title: "Triggered Alarm!", body: "A silent security system tripped instantly. You barely escaped with your skin." }
+        ];
+
+        const chosenSuccess = successStories[Math.floor(Math.random() * successStories.length)];
+        const chosenFail = failStories[Math.floor(Math.random() * failStories.length)];
+
         if (success) {
           triggerVFX('cash', ((p.x + 0.5) / 8) * 100, ((p.y + 0.5) / 8) * 100);
           setPlayers(prev => {
@@ -843,10 +863,10 @@
         }
         if (success) {
           playSound('heistSuccess');
-          setActionOutcome({ success: true, title: "Heist Successful!", body: `Safe cracked. Secured $${heistReward}. Slipped away into the night.`, actionLog: `${p.name} pulled off a professional heist for $${heistReward}.` });
+          setActionOutcome({ success: true, title: chosenSuccess.title, body: chosenSuccess.body, actionLog: `${p.name} pulled off a heist for $${heistReward}.` });
         } else {
           playSound('heistFail');
-          setActionOutcome({ success: false, title: "Heist Failed!", body: "The safe was too tough. You fled before the cops arrived.", actionLog: `${p.name} botched a heist.` });
+          setActionOutcome({ success: false, title: chosenFail.title, body: chosenFail.body, actionLog: `${p.name} botched a heist.` });
         }
       };
 
