@@ -1102,7 +1102,7 @@
                           <span className="text-[10px] font-black uppercase">Buy Arms</span>
                           <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-500" color="text-red-300" /><StatChange icon="crosshair" value="+4 PWR" color="text-white" /></div>
                         </button>
-                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
+                        <button disabled={pCurrent?.isCPU || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
                           <span className="text-[10px] font-black uppercase">Pull Heist</span>
                           <div className="flex flex-col items-center"><StatChange icon="shield-alert" value="+1.0" color="text-orange-400" /><StatChange icon="target" value="45%" color="text-amber-200" /><StatChange icon="briefcase" value="+$???" color="text-emerald-300" /></div>
                         </button>
