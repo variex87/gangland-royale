@@ -184,12 +184,16 @@
 
     function App() {
       /* =========================================================================
-         YOUR SOUND EFFECT FILE NAMES (Match these to your exact GitHub filenames)
+         YOUR SOUND EFFECT FILE NAMES (Updated with buy.wav & muscle arrays)
          ========================================================================= */
       const SFX = {
         dice: ['./Dice-1.wav', './Dice-2.wav', './Dice-3.wav'], 
         buy: './buy.wav',
-        muscle: ['./muscle-1.wav', './muscle-2.wav', './muscle-3.wav', './muscle-4.wav', './muscle-5.wav', './muscle-6.wav', './muscle-7.wav', './muscle-8.wav', './muscle-9.wav'],
+        muscle: [
+            './muscle-1.wav', './muscle-2.wav', './muscle-3.wav',
+            './muscle-4.wav', './muscle-5.wav', './muscle-6.wav',
+            './muscle-7.wav', './muscle-8.wav', './muscle-9.wav'
+        ],
         recruit: './recruit.mp3',
         arms: './arms.mp3',
         heistSuccess: './heist_win.mp3',
@@ -204,9 +208,8 @@
         lockedDown: './locked_down.mp3'
       };
 
+      const audioBuffersRef = useRef({});
       const lastSfxIndices = useRef({});
-
-     const audioBuffersRef = useRef({});
 
       const playSound = useCallback(async (key) => {
         const item = SFX[key];
@@ -227,7 +230,6 @@
         }
 
         try {
-          // Ensure AudioContext is active
           if (!window._audioCtx) {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             if (AudioContextClass) window._audioCtx = new AudioContextClass();
@@ -237,7 +239,6 @@
             await ctx.resume();
           }
 
-          // Fetch and cache audio buffer once, then play instantly anytime (even on CPU timers)
           if (!audioBuffersRef.current[fileUrl]) {
             const response = await fetch(fileUrl);
             const arrayBuffer = await response.arrayBuffer();
@@ -254,15 +255,12 @@
           }
         } catch (e) {
           console.log("Web Audio fallback trigger:", e);
-          // Fallback to standard HTML5 audio if fetch fails
           try {
             const fallback = new Audio(fileUrl);
             fallback.play().catch(() => {});
           } catch(err) {}
         }
       }, []);
-
-      
       /* ========================================================================= */
 
       const [gameState, setGameState] = useState('MENU');
@@ -446,7 +444,6 @@
       };
 
       const handleLaunch = () => {
-
         // UNLOCKS MASTER AUDIO CHANNEL FOR MOBILE CPU TURNS
         if (!window._audioCtx) {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -455,7 +452,7 @@
         if (window._audioCtx && window._audioCtx.state === 'suspended') {
           window._audioCtx.resume();
         }
-               
+
         const activeConfigs = setupConfig.filter(c => c.active);
         const activeIds = activeConfigs.map(c => c.id);
         const initialPlayers = activeConfigs.map((c, idx) => ({
@@ -545,7 +542,6 @@
         }
 
         playSound('dice');
-        
 
         setIsRolling(true);
         let rolls = 0;
@@ -1049,138 +1045,10 @@
                   );
                 })}
               </div>
-
-              {victory && (
-                <div className="absolute inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-amber-500 mx-1 my-1 shadow-[0_0_50px_rgba(245,158,11,0.3)] animate-in fade-in zoom-in duration-500">
-                  <div className="relative mb-6"><Icon name="trophy" size={80} className="text-amber-500 animate-bounce" /><Icon name="crown" size={32} className="text-white absolute -top-4 -right-4 rotate-12" /></div>
-                  <h2 className="text-4xl font-black uppercase italic mb-2 tracking-tighter text-white">CITY TAKEOVER</h2>
-                  <div className={`px-4 py-1 rounded-full ${victory.color} mb-4`}><span className="text-sm font-black uppercase tracking-widest">{victory.name} EMPIRE</span></div>
-                  <p className="text-zinc-300 text-sm mb-8 leading-snug max-w-[240px]">Every neighborhood is under your lock and key. The streets are yours. The city has fallen.</p>
-                  <button onClick={() => setGameState('MENU')} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95 shadow-xl shadow-white/10">Return to Shadows</button>
-                </div>
-              )}
-
-              {staleMate && (
-                <div className="absolute inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-6 text-center rounded-2xl border-4 border-zinc-600 mx-1 my-1 animate-in fade-in duration-500">
-                  <h2 className="text-3xl font-black uppercase italic mb-1 tracking-tighter text-white">CONSOLIDATED CONTROL</h2>
-                  <p className="text-zinc-400 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">The city is fully carved up. No territory remains.</p>
-                  <div className="w-full space-y-2 mb-6 max-h-[220px] overflow-y-auto pr-2">
-                    {winningOrder.map((p, idx) => (
-                      <div key={p.id} className={`flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${idx === 0 ? 'border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-white/5'}`}>
-                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-zinc-800 text-xs font-black">
-                           {idx === 0 ? <Icon name="medal" size={16} className="text-amber-500"/> : idx + 1}
-                        </div>
-                        <div className="flex-1 text-left">
-                           <p className={`text-[10px] font-black uppercase ${p.text}`}>{p.name}</p>
-                           <p className="text-[12px] font-black text-white">{p.influence} <span className="text-[8px] text-zinc-500 ml-1">INF</span></p>
-                        </div>
-                        {idx === 0 && <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter">THE DON</span>}
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={() => setGameState('MENU')} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95">End Operations</button>
-                </div>
-              )}
-
-              {pinched && (
-                 <div className="absolute inset-0 z-[5000] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-red-500 mx-1 my-1">
-                    <Icon name="gavel" size={48} className="text-white mb-4 animate-bounce"/><h2 className="text-3xl font-black uppercase italic mb-1">Pinched!</h2>
-                    <p className="text-red-400 text-[10px] font-black mb-1 tracking-widest uppercase">{pinched.context}</p>
-                    <p className="text-white/80 text-sm mb-4 leading-snug">{pinched.logMsg}</p>
-                    <div className="bg-black/40 p-4 rounded-xl w-full mb-6 border border-white/10">
-                       <div className="flex justify-between text-xs font-black mb-1 text-red-400"><span>Legal Fees:</span><span>-${pinched.fine}</span></div>
-                       <div className="flex justify-between text-xs font-black text-red-400"><span>Sentence:</span><span>Relocate to Jail & Skip Turn</span></div>
-                    </div>
-                    <button onClick={resolvePinch} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95">Serve Your Time</button>
-                 </div>
-              )}
-
-              {battle && (
-                <div className="absolute inset-0 z-[2000] bg-black/95 flex flex-col p-4 text-center rounded-2xl border-4 border-red-600 overflow-y-auto mx-1 my-1">
-                  {battleStep === 'idle' && (
-                    <>
-                      <Icon name="skull" size={32} className="text-red-600 mx-auto mb-1 animate-pulse"/><h2 className="text-xl font-black uppercase italic text-white mb-2 underline decoration-red-600 decoration-2 tracking-widest">Attack Rival</h2>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {[battle.attacker, battle.defender].map((pid, idx) => {
-                          const p = players[pid]; const power = getPower(p);
-                          const winChance = idx === 0 ? calculateWinChance(players[battle.attacker], players[battle.defender]) : 1 - calculateWinChance(players[battle.attacker], players[battle.defender]);
-                          const odds = Math.round(winChance * 100);
-                          return (
-                            <div key={pid} className={`p-2 rounded-xl bg-zinc-900 border ${idx === 0 ? 'border-blue-500/50' : 'border-red-500/50'} flex flex-col items-center relative overflow-hidden`}>
-                              <p className={`text-[8px] font-black uppercase mb-1 ${p.text}`}>{idx === 0 ? 'Attacker' : 'Defender'}</p>
-                              <p className="text-[11px] font-black text-white leading-none mb-2">{p.name}</p>
-                              <div className="w-full space-y-1 z-10">
-                                <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">INF</span><span className="text-amber-500 font-black">{p.influence}</span></div>
-                                <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">CREW</span><span className="text-blue-400 font-black">{p.soldiers + 1}</span></div>
-                                <div className="flex justify-between text-[10px] pt-1 border-t border-white/5"><span className="text-zinc-400 font-bold uppercase tracking-tighter">PWR</span><span className="text-white font-black">{power}</span></div>
-                              </div>
-                              <div className={`mt-2 text-[11px] font-black ${idx === 0 ? 'text-blue-400' : 'text-red-400'} animate-pulse`}>{odds}% WIN</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="mb-3 p-2 bg-red-600/20 border border-red-600/40 rounded-lg"><p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Heat Projection</p><p className="text-[10px] text-white/80 font-bold">Attacker: +2.0 Heat</p></div>
-                      {!players[battle.attacker].isCPU ? (
-                        <>
-                          <button onClick={executeBattle} className="w-full bg-red-600 py-3 rounded-xl font-black uppercase text-sm mb-2 shadow-lg shadow-red-950 active:scale-95 transition-transform">Hit ‘Em!</button>
-                          {battle.tile.owner !== null && battle.tile.owner !== players[battle.attacker].id ? (
-                            <button disabled={players[battle.attacker].money < 300} onClick={() => handleAction('tribute', 300, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all ${players[battle.attacker].money >= 300 ? 'bg-zinc-800 text-white border-white/20 active:scale-95' : 'bg-zinc-900 text-zinc-600 border-transparent opacity-50 cursor-not-allowed'}`}>Pay $300 Tribute</button>
-                          ) : (
-                            <button onClick={() => handleAction('withdraw', 0, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all bg-zinc-800 text-white border-white/20 active:scale-95 flex items-center justify-center gap-2`}><Icon name="undo-2" size={14}/> Withdraw to Start</button>
-                          )}
-                        </>
-                      ) : (<div className="w-full py-4 text-amber-500 font-black animate-pulse italic uppercase tracking-widest">CPU is initiating strike...</div>)}
-                    </>
-                  )}
-                  {battleStep === 'anim' && (
-                    <div className="flex-1 flex flex-col items-center justify-center"><Icon name="flame" size={48} className="text-orange-500 animate-bounce mb-4"/><h2 className="text-2xl font-black italic animate-pulse tracking-tighter">WAR IN THE STREETS...</h2></div>
-                  )}
-                  {battleStep === 'result' && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-2">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${battleWinner ? 'bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.6)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)]'}`}>{battleWinner ? <Icon name="crown" size={32}/> : <Icon name="skull" size={32}/>}</div>
-                      <h2 className="text-2xl font-black uppercase italic mb-1">{battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Victory but Pinched!' : 'Victory!') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Defeated and Pinched!' : 'Defeat!')}</h2>
-                      <div className="bg-zinc-900 w-full p-4 rounded-2xl my-4 border border-white/10 text-left overflow-y-auto max-h-[140px]">
-                        <p className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-tighter">Results:</p>
-                        {battleWinner ? (
-                          <div className="space-y-1 text-xs text-zinc-200">
-                            <div className="flex justify-between font-black"><span className="text-emerald-500">+100 Influence</span></div>
-                            <div className="flex justify-between font-black"><span className="text-emerald-500">+$ {Math.floor(players[battle.defender].money * (lockedDistricts[battle.tile.dist.id] !== null ? 0.25 : 0.3))} Bounty</span></div>
-                            <div className="flex justify-between font-black"><span className="text-red-500">-100 Rival Influence</span></div>
-                            {players[battle.defender].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">Whacked 1 rival soldier</span></div>}
-                            {lockedDistricts[battle.tile.dist.id] === players[battle.defender].id ? (
-                                <div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-amber-400 font-black italic uppercase text-[9px]">Hood Locked - Turf Retained by Rival</span></div>
-                            ) : battle.tile.isHQ && (<div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-blue-400 font-black italic uppercase text-[9px]">Stronghold Captured</span></div>)}
-                          </div>
-                        ) : (
-                          <div className="space-y-1 text-xs text-zinc-200">
-                            <div className="flex justify-between font-black"><span className="text-red-500">-100 Influence</span></div>
-                            <div className="flex justify-between font-black"><span className="text-red-500">-$ {Math.floor(players[battle.attacker].money * 0.3)} Extorted</span></div>
-                            {players[battle.attacker].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">1 soldier whacked in battle</span></div>}
-                          </div>
-                        )}
-                      </div>
-                      {!players[battle.attacker].isCPU ? (
-                        <button onClick={processBattleResult} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
-                          {battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Claim Victory') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Recover in the Hospital')}
-                        </button>
-                      ) : (<div className="w-full py-4 text-zinc-500 font-black italic uppercase text-xs">Processing After-Action...</div>)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {actionOutcome && (
-                <div className="absolute inset-0 z-[4000] bg-black/95 flex flex-col items-center justify-center p-8 text-center rounded-2xl border-4 border-white/20 mx-1 my-1">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${actionOutcome.success ? 'bg-emerald-600 shadow-[0_0_20px_rgba(5,150,105,0.4)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.4)]'}`}>{actionOutcome.success ? <Icon name="briefcase" size={32}/> : <Icon name="shield-alert" size={32}/>}</div>
-                  <h2 className="text-2xl font-black uppercase italic mb-2">{actionOutcome.title}</h2>
-                  <p className="text-zinc-400 text-xs mb-6">{actionOutcome.body}</p>
-                  <button onClick={() => nextTurn(actionOutcome.actionLog)} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase">Continue</button>
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="w-full p-2 flex justify-center shrink-0 mb-4">
+          <div className="w-full p-2 flex justify-center shrink-0 mb-4 z-[100]">
             <div className="w-full max-w-md h-[160px]">
               {selectedTile ? (
                 <div className="bg-zinc-900 border-2 border-white/15 rounded-3xl p-3.5 flex flex-col gap-3 shadow-2xl h-full">
@@ -1232,37 +1100,22 @@
                         </button>
                       </div>
                     )}
-
-                    
-                    {selectedTile.owner !== null && selectedTile.owner !== pCurrent.id && (
-  <>
-    {lockedDistricts[selectedTile.dist.id] === null ? (
-      // RULE 1: Unlocked Property -> Direct Attack or Tribute
-      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
-        onClick={() => {
-            const defenderIdx = players.findIndex(p => p.id === selectedTile.owner);
-            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: 'owned' });
-            setBattleStep('idle');
-        }} 
-        className="col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black bg-gradient-to-r from-red-900 to-red-600 active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all">
-        <div className="flex items-center gap-2"><Icon name="skull" size={18}/> Attack Rival</div>
-      </button>
-    ) : (
-      // RULE 2: Locked District Property -> Option to Muscle In (Raid)
-      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
-        onClick={() => {
-            const defenderIdx = players.findIndex(p => p.id === selectedTile.owner);
-            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: 'owned' });
-            setBattleStep('idle');
-        }} 
-        className="col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black bg-red-800 border-red-950 active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all">
-        <div className="flex items-center gap-2"><Icon name="flame" size={18}/> Muscle In (Raid)</div>
-        <span className="text-[8px] text-white/70 font-bold opacity-80">WIN TO STEAL 25% CASH</span>
-      </button>
-    )}
-  </>
-)}
-                    
+                    {((selectedTile.owner !== null && selectedTile.owner !== pCurrent.id) || players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y)) && (
+                      <button disabled={pCurrent?.isCPU || !!victory || !!staleMate}
+                        onClick={() => {
+                            const rivalOnTile = players.find(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y);
+                            const defenderIdx = rivalOnTile ? players.indexOf(rivalOnTile) : players.findIndex(p => p.id === selectedTile.owner);
+                            setBattle({ attacker: currentPlayer, defender: defenderIdx, tile: selectedTile, reason: rivalOnTile ? 'occupied' : 'owned' });
+                            setBattleStep('idle');
+                        }} 
+                        className={`col-span-2 p-3 rounded-xl font-black uppercase text-xs border-b-4 border-black active:translate-y-1 flex flex-col items-center justify-center gap-0.5 transition-all
+                        ${(pCurrent?.isCPU || !!victory || !!staleMate) ? 'bg-zinc-700 opacity-50 border-zinc-900 cursor-not-allowed' : (lockedDistricts[selectedTile.dist.id] !== null ? 'bg-red-800 border-red-950' : 'bg-gradient-to-r from-red-900 to-red-600')}`}>
+                        <div className="flex items-center gap-2">{lockedDistricts[selectedTile.dist.id] !== null ? <Icon name="flame" size={18}/> : <Icon name="skull" size={18}/>} 
+                            {players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) ? 'Attack Rival' : (lockedDistricts[selectedTile.dist.id] !== null ? 'Raid Rival' : 'Attack Rival')}
+                        </div>
+                        {lockedDistricts[selectedTile.dist.id] !== null && <span className="text-[8px] text-white/70 font-bold opacity-80">WIN TO STEAL 25% CASH</span>}
+                      </button>
+                    )}
                     {selectedTile.owner === players[currentPlayer]?.id && !players.some(r => r.id !== pCurrent.id && r.x === selectedTile.x && r.y === selectedTile.y) && (
                       <div className="col-span-2 bg-zinc-800/40 rounded-xl flex items-center justify-center text-[10px] font-black uppercase text-zinc-500 border border-dashed border-white/10 italic">Your Stronghold</div>
                     )}
@@ -1271,6 +1124,139 @@
               ) : (<div className="bg-zinc-900/10 border-2 border-dashed border-white/5 rounded-3xl h-full flex flex-col items-center justify-center opacity-30 text-zinc-500"><Icon name="wind" size={24} className="mb-1"/><p className="text-[10px] font-black uppercase tracking-[0.4em]">Establish Control</p></div>)}
             </div>
           </div>
+          
+          {/* ========================================================================================= */}
+          {/* FULL SCREEN POPUPS (Moved outside the grid to cover the entire screen & bottom panel)       */}
+          {/* ========================================================================================= */}
+          {victory && (
+            <div className="fixed inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
+              <div className="relative mb-6"><Icon name="trophy" size={80} className="text-amber-500 animate-bounce" /><Icon name="crown" size={32} className="text-white absolute -top-4 -right-4 rotate-12" /></div>
+              <h2 className="text-4xl font-black uppercase italic mb-2 tracking-tighter text-white">CITY TAKEOVER</h2>
+              <div className={`px-4 py-1 rounded-full ${victory.color} mb-4`}><span className="text-sm font-black uppercase tracking-widest">{victory.name} EMPIRE</span></div>
+              <p className="text-zinc-300 text-sm mb-8 leading-snug max-w-[240px]">Every neighborhood is under your lock and key. The streets are yours. The city has fallen.</p>
+              <button onClick={() => setGameState('MENU')} className="w-full max-w-sm bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95 shadow-xl shadow-white/10">Return to Shadows</button>
+            </div>
+          )}
+
+          {staleMate && (
+            <div className="fixed inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+              <h2 className="text-3xl font-black uppercase italic mb-1 tracking-tighter text-white">CONSOLIDATED CONTROL</h2>
+              <p className="text-zinc-400 text-[10px] font-black mb-4 uppercase tracking-[0.2em]">The city is fully carved up. No territory remains.</p>
+              <div className="w-full max-w-sm space-y-2 mb-6 max-h-[220px] overflow-y-auto pr-2">
+                {winningOrder.map((p, idx) => (
+                  <div key={p.id} className={`flex items-center gap-3 bg-black/40 p-3 rounded-xl border ${idx === 0 ? 'border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'border-white/5'}`}>
+                    <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-zinc-800 text-xs font-black">
+                       {idx === 0 ? <Icon name="medal" size={16} className="text-amber-500"/> : idx + 1}
+                    </div>
+                    <div className="flex-1 text-left">
+                       <p className={`text-[10px] font-black uppercase ${p.text}`}>{p.name}</p>
+                       <p className="text-[12px] font-black text-white">{p.influence} <span className="text-[8px] text-zinc-500 ml-1">INF</span></p>
+                    </div>
+                    {idx === 0 && <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter">THE DON</span>}
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setGameState('MENU')} className="w-full max-w-sm bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest active:scale-95">End Operations</button>
+            </div>
+          )}
+
+          {pinched && (
+             <div className="fixed inset-0 z-[6000] bg-red-950/95 flex flex-col items-center justify-center p-8 text-center">
+                <Icon name="gavel" size={48} className="text-white mb-4 animate-bounce"/><h2 className="text-3xl font-black uppercase italic mb-1">Pinched!</h2>
+                <p className="text-red-400 text-[10px] font-black mb-1 tracking-widest uppercase">{pinched.context}</p>
+                <p className="text-white/80 text-sm mb-4 leading-snug max-w-[300px]">{pinched.logMsg}</p>
+                <div className="bg-black/40 p-4 rounded-xl w-full max-w-sm mb-6 border border-white/10">
+                   <div className="flex justify-between text-xs font-black mb-1 text-red-400"><span>Legal Fees:</span><span>-${pinched.fine}</span></div>
+                   <div className="flex justify-between text-xs font-black text-red-400"><span>Sentence:</span><span>Relocate to Jail & Skip Turn</span></div>
+                </div>
+                <button onClick={resolvePinch} className="w-full max-w-sm bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95">Serve Your Time</button>
+             </div>
+          )}
+
+          {battle && (
+            <div className="fixed inset-0 z-[6000] bg-zinc-950/95 flex flex-col items-center justify-center p-4 text-center overflow-y-auto">
+              <div className="w-full max-w-sm bg-zinc-950 border-4 border-red-600 rounded-2xl p-6 flex flex-col shadow-[0_0_50px_rgba(220,38,38,0.2)]">
+                {battleStep === 'idle' && (
+                  <>
+                    <Icon name="skull" size={32} className="text-red-600 mx-auto mb-1 animate-pulse"/><h2 className="text-xl font-black uppercase italic text-white mb-2 underline decoration-red-600 decoration-2 tracking-widest">Attack Rival</h2>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {[battle.attacker, battle.defender].map((pid, idx) => {
+                        const p = players[pid]; const power = getPower(p);
+                        const winChance = idx === 0 ? calculateWinChance(players[battle.attacker], players[battle.defender]) : 1 - calculateWinChance(players[battle.attacker], players[battle.defender]);
+                        const odds = Math.round(winChance * 100);
+                        return (
+                          <div key={pid} className={`p-2 rounded-xl bg-zinc-900 border ${idx === 0 ? 'border-blue-500/50' : 'border-red-500/50'} flex flex-col items-center relative overflow-hidden`}>
+                            <p className={`text-[8px] font-black uppercase mb-1 ${p.text}`}>{idx === 0 ? 'Attacker' : 'Defender'}</p>
+                            <p className="text-[11px] font-black text-white leading-none mb-2">{p.name}</p>
+                            <div className="w-full space-y-1 z-10">
+                              <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">INF</span><span className="text-amber-500 font-black">{p.influence}</span></div>
+                              <div className="flex justify-between text-[9px]"><span className="text-zinc-500 font-bold italic">CREW</span><span className="text-blue-400 font-black">{p.soldiers + 1}</span></div>
+                              <div className="flex justify-between text-[10px] pt-1 border-t border-white/5"><span className="text-zinc-400 font-bold uppercase tracking-tighter">PWR</span><span className="text-white font-black">{power}</span></div>
+                            </div>
+                            <div className={`mt-2 text-[11px] font-black ${idx === 0 ? 'text-blue-400' : 'text-red-400'} animate-pulse`}>{odds}% WIN</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mb-3 p-2 bg-red-600/20 border border-red-600/40 rounded-lg"><p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Heat Projection</p><p className="text-[10px] text-white/80 font-bold">Attacker: +2.0 Heat</p></div>
+                    {!players[battle.attacker].isCPU ? (
+                      <>
+                        <button onClick={executeBattle} className="w-full bg-red-600 py-3 rounded-xl font-black uppercase text-sm mb-2 shadow-lg shadow-red-950 active:scale-95 transition-transform">Hit ‘Em!</button>
+                        {battle.tile.owner !== null && battle.tile.owner !== players[battle.attacker].id ? (
+                          <button disabled={players[battle.attacker].money < 300} onClick={() => handleAction('tribute', 300, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all ${players[battle.attacker].money >= 300 ? 'bg-zinc-800 text-white border-white/20 active:scale-95' : 'bg-zinc-900 text-zinc-600 border-transparent opacity-50 cursor-not-allowed'}`}>Pay $300 Tribute</button>
+                        ) : (
+                          <button onClick={() => handleAction('withdraw', 0, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all bg-zinc-800 text-white border-white/20 active:scale-95 flex items-center justify-center gap-2`}><Icon name="undo-2" size={14}/> Withdraw to Start</button>
+                        )}
+                      </>
+                    ) : (<div className="w-full py-4 text-amber-500 font-black animate-pulse italic uppercase tracking-widest">CPU is initiating strike...</div>)}
+                  </>
+                )}
+                {battleStep === 'anim' && (
+                  <div className="flex-1 flex flex-col items-center justify-center py-8"><Icon name="flame" size={48} className="text-orange-500 animate-bounce mb-4"/><h2 className="text-2xl font-black italic animate-pulse tracking-tighter">WAR IN THE STREETS...</h2></div>
+                )}
+                {battleStep === 'result' && (
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${battleWinner ? 'bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.6)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.6)]'}`}>{battleWinner ? <Icon name="crown" size={32}/> : <Icon name="skull" size={32}/>}</div>
+                    <h2 className="text-2xl font-black uppercase italic mb-1">{battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Victory but Pinched!' : 'Victory!') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Defeated and Pinched!' : 'Defeat!')}</h2>
+                    <div className="bg-zinc-900 w-full p-4 rounded-2xl my-4 border border-white/10 text-left overflow-y-auto max-h-[140px]">
+                      <p className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-tighter">Results:</p>
+                      {battleWinner ? (
+                        <div className="space-y-1 text-xs text-zinc-200">
+                          <div className="flex justify-between font-black"><span className="text-emerald-500">+100 Influence</span></div>
+                          <div className="flex justify-between font-black"><span className="text-emerald-500">+$ {Math.floor(players[battle.defender].money * (lockedDistricts[battle.tile.dist.id] !== null ? 0.25 : 0.3))} Bounty</span></div>
+                          <div className="flex justify-between font-black"><span className="text-red-500">-100 Rival Influence</span></div>
+                          {players[battle.defender].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">Whacked 1 rival soldier</span></div>}
+                          {lockedDistricts[battle.tile.dist.id] === players[battle.defender].id ? (
+                              <div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-amber-400 font-black italic uppercase text-[9px]">Hood Locked - Turf Retained by Rival</span></div>
+                          ) : battle.tile.isHQ && (<div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-blue-400 font-black italic uppercase text-[9px]">Stronghold Captured</span></div>)}
+                        </div>
+                      ) : (
+                        <div className="space-y-1 text-xs text-zinc-200">
+                          <div className="flex justify-between font-black"><span className="text-red-500">-100 Influence</span></div>
+                          <div className="flex justify-between font-black"><span className="text-red-500">-$ {Math.floor(players[battle.attacker].money * 0.3)} Extorted</span></div>
+                          {players[battle.attacker].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">1 soldier whacked in battle</span></div>}
+                        </div>
+                      )}
+                    </div>
+                    {!players[battle.attacker].isCPU ? (
+                      <button onClick={processBattleResult} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
+                        {battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Claim Victory') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Recover in the Hospital')}
+                      </button>
+                    ) : (<div className="w-full py-4 text-zinc-500 font-black italic uppercase text-xs">Processing After-Action...</div>)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {actionOutcome && (
+            <div className="fixed inset-0 z-[6000] bg-black/95 flex flex-col items-center justify-center p-8 text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${actionOutcome.success ? 'bg-emerald-600 shadow-[0_0_20px_rgba(5,150,105,0.4)]' : 'bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.4)]'}`}>{actionOutcome.success ? <Icon name="briefcase" size={32}/> : <Icon name="shield-alert" size={32}/>}</div>
+              <h2 className="text-2xl font-black uppercase italic mb-2">{actionOutcome.title}</h2>
+              <p className="text-zinc-400 text-xs mb-6 max-w-[250px]">{actionOutcome.body}</p>
+              <button onClick={() => nextTurn(actionOutcome.actionLog)} className="w-full max-w-sm bg-white text-black py-4 rounded-xl font-black uppercase">Continue</button>
+            </div>
+          )}
         </div>
       );
     }
