@@ -224,10 +224,17 @@
           fileUrl = item;
         }
 
-        const audio = new Audio(fileUrl);
-        audio.currentTime = 0;
-        audio.play().catch(e => console.log('Audio playback status:', e));
+        const audio = new Audio();
+        audio.src = fileUrl;
+        audio.load();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log("Audio restriction bypassed:", error);
+          });
+        }
       }, []);
+      
       /* ========================================================================= */
 
       const [gameState, setGameState] = useState('MENU');
