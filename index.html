@@ -588,7 +588,7 @@
       const processBattleResult = useCallback(() => {
         if (!battle) return;
 
-        playSound('recover');
+       
 
         const win = battleWinner;
         const dIdx = battle.defender;
@@ -888,7 +888,7 @@
             // Overrides victory/defeat sounds with the police sirens
             playSound('pinched');
           } else if (win) {
-            playSound('battleVictory');
+        
           } else {
             playSound('battleDefeat');
           }
@@ -1270,8 +1270,16 @@
                         </div>
                       )}
                     </div>
-                    {!players[battle.attacker].isCPU ? (
-                      <button onClick={processBattleResult} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
+                   {!players[battle.attacker].isCPU ? (
+                      <button onClick={() => { 
+                          const willBePinched = players[battle.attacker].heat + 2.0 > 5.0;
+                          if (battleWinner && !willBePinched) {
+                            playSound('battleVictory');
+                          } else {
+                            playSound('recover');
+                          }
+                          processBattleResult(); 
+                      }} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
                         {battleWinner ? (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Claim Victory') : (players[battle.attacker].heat + 2.0 > 5.0 ? 'Serve Your Time' : 'Recover in the Hospital')}
                       </button>
                     ) : (<div className="w-full py-4 text-zinc-500 font-black italic uppercase text-xs">Processing After-Action...</div>)}
