@@ -1273,10 +1273,12 @@
                    {!players[battle.attacker].isCPU ? (
                       <button onClick={() => { 
                           const willBePinched = players[battle.attacker].heat + 2.0 > 5.0;
-                          if (battleWinner && !willBePinched) {
-                            playSound('battleVictory');
+                          if (willBePinched) {
+                            playSound('jail'); // Plays jail sound if pinched!
+                          } else if (battleWinner) {
+                            playSound('battleVictory'); // Plays victory sound on clean win!
                           } else {
-                            playSound('recover');
+                            playSound('recover'); // Plays hospital sound on normal defeat!
                           }
                           processBattleResult(); 
                       }} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase active:scale-95 transition-transform">
