@@ -116,7 +116,7 @@
 
     const generateDistrictCosts = () => {
       const count = 9;
-      const target = 10000;
+      const target = 20000;
       const min = 500;
       let costs = Array(count).fill(min);
       let currentSum = min * count;
@@ -377,6 +377,15 @@
       }, [map]);
 
       useEffect(() => {
+        if (!players.length) return;
+
+        // Check if any player has reached the 10,000 Influence Kingpin threshold
+        const influenceWinner = players.find(p => p.influence >= 10000);
+        if (influenceWinner && !victory) {
+          setVictory(influenceWinner);
+          return;
+        }
+
         const owners = Object.values(lockedDistricts);
         const lockedCount = owners.filter(o => o !== null).length;
 
@@ -388,7 +397,7 @@
         const uniqueOwners = [...new Set(owners.filter(o => o !== null))];
         
         for (const ownerId of uniqueOwners) {
-          const playerLockCount = owners.filter(o => o === ownerId).length;
+          const playerLockCount = owners.filter(o === ownerId).length;
           if (playerLockCount === 4) {
             const winner = players.find(p => p.id === ownerId);
             if (winner && !victory) {
@@ -429,7 +438,7 @@
       const getIncome = (p) => BASE_INCOME + ((p?.properties || 0) * INCOME_PER_PROP) + ((p?.soldiers || 0) * INCOME_PER_CREW);
       const getInfluenceGain = (p) => {
         const fromTurf = (p?.properties || 0) * 10;
-        const fromCrew = p?.soldiers > 0 ? p.soldiers * 5 : 0;
+        const fromCrew = p?.soldiers > 0 ? p.soldiers * 25 : 0;
         return fromTurf + fromCrew;
       };
 
@@ -610,16 +619,17 @@
             if (win) { 
                 const bounty = Math.floor(up[dIdx].money * 0.3);
                 const raidBounty = Math.floor(up[dIdx].money * 0.25);
+                const infSiphon = Math.floor(up[dIdx].influence * 0.10); // 10% of loser's clout
                 if (isLocked) {
                     up[aIdx].money += raidBounty;
                     up[dIdx].money = Math.max(0, up[dIdx].money - raidBounty);
-                    up[aIdx].influence += 100;
-                    up[dIdx].influence -= 100;
+                    up[aIdx].influence += infSiphon;
+                    up[dIdx].influence = Math.max(0, up[dIdx].influence - infSiphon);
                 } else {
                     up[aIdx].money += bounty; 
                     up[dIdx].money = Math.max(0, up[dIdx].money - bounty);
-                    up[aIdx].influence += 100; 
-                    up[dIdx].influence -= 100; 
+                    up[aIdx].influence += infSiphon; 
+                    up[dIdx].influence = Math.max(0, up[dIdx].influence - infSiphon);
                     setMap(oldMap => {
                       const newMap = [...oldMap];
                       const tIdx = newMap.findIndex(t => t.x === tileX && t.y === tileY);
@@ -645,11 +655,13 @@
                   triggerVFX('pinch', ((jailTile.x + 0.5) / 8) * 100, ((jailTile.y + 0.5) / 8) * 100);
                   pinchTarget = { idx: aIdx, msg: "The operation was successful, but the cops arrived as you were extracting. You're pinched." };
                 }
-            } else { 
+           } else { 
                 const extortion = Math.floor(up[aIdx].money * 0.3);
+                const lostInf = Math.floor(up[aIdx].influence * 0.10);
                 up[dIdx].money += extortion; 
                 up[aIdx].money = Math.max(0, up[aIdx].money - extortion);
-                up[aIdx].influence -= 100; up[dIdx].influence += 100; 
+                up[aIdx].influence = Math.max(0, up[aIdx].influence - lostInf); 
+                up[dIdx].influence += lostInf;
                 if (up[aIdx].soldiers > 0) up[aIdx].soldiers -= 1;
                 if (atkPinched) {
                   up[aIdx].x = jailTile.x; up[aIdx].y = jailTile.y; up[aIdx].skipTurn = true; up[aIdx].heat = 0;
@@ -1068,6 +1080,14 @@
                       ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-100' : ''}
                       ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-100' : ''}`}
                       style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
+                      
+                      {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
+                      {t.type === 'property' && t.owner === null && t.cost > 0 && (
+                        <span className="absolute top-0.5 left-1 text-[7px] font-black text-emerald-400/90 tracking-tighter z-10">
+                          ${t.cost}
+                        </span>
+                      )}
+
                       {t.type === 'hospital' && <MedicalCrossIcon size={16} className="text-red-500/80" />}
                       {t.type === 'jail' && <JailBarsIcon size={20} className="text-zinc-400" />}
                       {t.iconName && <div className={`opacity-80 scale-90 sm:scale-100 ${owner ? 'text-white/40' : 'text-white'}`}><Icon name={t.iconName} size={18} /></div>}
