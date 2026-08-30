@@ -362,8 +362,8 @@
         setMap(newMap);
       }, []);
 
-      const lockedDistricts = useMemo(() => {
-        const status = { DOCKS: null, ITALY: null, FINANCE: null, HEIGHTS: null };
+     const lockedDistricts = useMemo(() => {
+        const status = { DOCKS: null, ITALY: null, FINANCE: null, HEIGHTS: null, STREET: null };
         if (!map.length) return status;
         Object.keys(status).forEach(distKey => {
           const distTiles = map.filter(t => t.dist.id === distKey && t.type === 'property');
@@ -623,7 +623,7 @@
                     setMap(oldMap => {
                       const newMap = [...oldMap];
                       const tIdx = newMap.findIndex(t => t.x === tileX && t.y === tileY);
-                      if (tIdx !== -1 && newMap[tIdx].type !== 'hospital' && newMap[tIdx].type !== 'jail') {
+                      if (tIdx !== -1 && newMap[tIdx].type === 'property') {
                         newMap[tIdx].owner = up[aIdx].id;
                         if (newMap[tIdx].isHQ) newMap[tIdx].locationName = `${up[aIdx].name} Outpost`;
                       }
