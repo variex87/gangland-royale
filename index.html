@@ -811,7 +811,7 @@
           } else if (type === 'recruit') player.soldiers++;
           else if (type === 'arms') player.extraPower += 4;
           else if (type === 'tribute') {
-              const targetOwnerId = selectedTile ? selectedTile.owner : battle.tile.owner;
+              const targetOwnerId = selectedTile?.owner ?? battle?.tile?.owner ?? null;
               const ownerIdx = up.findIndex(pl => pl.id === targetOwnerId);
               if (ownerIdx !== -1) { 
                   // Calculate 5% of the payer's influence
