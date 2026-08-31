@@ -781,9 +781,11 @@
         else if (type === 'muscle') logMsg = `${p.name} muscled in on ${selectedTile.locationName}.`;
         else if (type === 'recruit') logMsg = `${p.name} recruited a new soldier.`;
         else if (type === 'arms') logMsg = `${p.name} upgraded their arsenal.`;
-        else if (type === 'tribute') {
-            const ownerId = selectedTile ? selectedTile.owner : (battle ? battle.tile.owner : null);
-            logMsg = `${p.name} paid $${cost} tribute and ${infTransfer} INF to ${PLAYER_CONFIGS[ownerId].name}.`;
+       else if (type === 'tribute') {
+            const ownerId = selectedTile?.owner ?? battle?.tile?.owner;
+            const ownerName = players.find(pl => pl.id === ownerId)?.name || 'the rival';
+            const infTransfer = Math.floor(p.influence * 0.05);
+            logMsg = `${p.name} paid $${cost} tribute and ${infTransfer} INF to ${ownerName}.`;
         } else if (type === 'withdraw') logMsg = `${p.name} withdrew from the confrontation.`;
 
         const tileX = selectedTile ? selectedTile.x : p.x;
