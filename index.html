@@ -133,7 +133,7 @@
       <div className={`relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-all duration-300 ${isCurrent ? 'z-[100] scale-110' : 'z-[50] scale-100 opacity-100'}`}>
         <div className={`absolute inset-0 rounded-full blur-md opacity-80 scale-110`} style={{ backgroundColor: ring }} />
         {isCurrent && <div className="absolute inset-0 rounded-full animate-pulse opacity-50 bg-white scale-125 z-0" />}
-        {isCurrent && turnStarted && movesLeft > 0 && (
+       {isCurrent && turnStarted && movesLeft > 0 && (
           <div className="absolute inset-0 z-[120] pointer-events-none">
             <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3 left-1/2 -translate-x-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-up" size={10}/></button>
             <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-down" size={10}/></button>
@@ -141,11 +141,13 @@
             <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3 top-1/2 -translate-y-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={10}/></button>
           </div>
         )}
-        <div className="absolute -bottom-1 -left-1 bg-zinc-900 text-cyan-400 text-[8px] font-black aspect-square w-5 h-5 rounded-full border-2 border-cyan-500/60 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
-          {Math.floor(1 + soldiers + (extraPower || 0))}
-        </div>
-        <div className="absolute -bottom-1 -right-1 bg-black text-white text-[9px] font-black aspect-square w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-[110] shadow-lg leading-none">
+        {/* CREW BADGE (MOVED TO UPPER LEFT) */}
+        <div className="absolute -top-1 -left-1 bg-black text-white text-[9px] font-black aspect-square w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Crew">
           {soldiers + 1}
+        </div>
+        {/* POWER BADGE (ADDED TO BOTTOM RIGHT) */}
+        <div className="absolute -bottom-1 -right-1 bg-zinc-900 text-cyan-400 text-[8px] font-black aspect-square w-5 h-5 rounded-full border-2 border-cyan-500/60 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
+          {Math.floor(1 + soldiers + (extraPower || 0))}
         </div>
         <svg viewBox="0 0 24 24" className="w-full h-full filter drop-shadow-2xl relative z-10" fill="none">
           <circle cx="12" cy="12" r="10" fill="#000" stroke={ring} strokeWidth="2.5" />
@@ -1085,8 +1087,8 @@
                       style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
-                      {t.type === 'property' && t.owner === null && t.cost > 0 && (
-                        <span className="absolute top-0.5 left-1 text-[7px] font-black text-emerald-400/90 tracking-tighter z-10">
+                     {t.type === 'property' && t.owner === null && t.cost > 0 && (
+                        <span className="absolute top-0.5 right-1 text-[7px] font-black text-emerald-400/90 tracking-tighter z-10">
                           ${t.cost}
                         </span>
                       )}
