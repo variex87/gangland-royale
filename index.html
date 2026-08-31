@@ -146,7 +146,7 @@
           {soldiers + 1}
         </div>
         {/* POWER BADGE (RED OUTLINE & WHITE TEXT) */}
-        <div className="absolute -bottom-1 -right-1 bg-red-950 text-white text-[8px] font-black aspect-square w-4 h-4 rounded-full border-2 border-red-500 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
+        <div className="absolute -bottom-1 -right-1 bg-orange-950 text-white text-[8px] font-black aspect-square w-4 h-4 rounded-full border-2 border-orange-500 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
           {Math.floor(1 + soldiers + (extraPower || 0))}
         </div>
         <svg viewBox="0 0 24 24" className="w-full h-full filter drop-shadow-2xl relative z-10" fill="none">
@@ -180,7 +180,7 @@
           case 'loss': return <Icon name="skull" size={24} className="text-red-500" />;
           case 'pinch': return <Icon name="gavel" size={24} className="text-white" />;
           case 'heartbeat': return <Icon name="heart-pulse" size={24} className="text-pink-500" />;
-          case 'arms': return <Icon name="crosshair" size={24} className="text-red-500" />;
+          case 'arms': return <Icon name="crosshair" size={24} className="text-orange-500" />;
           case 'muscle': return <FlexArmIcon size={24} className="text-orange-500" />;
           case 'buy': return <Icon name="crown" size={24} className="text-amber-500" />;
           default: return null;
@@ -1037,9 +1037,9 @@
               <div><Icon name="crown" size={12} className="mx-auto text-amber-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">INF</p><span className="text-[10px] font-black">{pStats?.influence || 0}</span></div>
               <div><Icon name="briefcase" size={12} className="mx-auto text-emerald-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CASH</p><span className="text-[10px] font-black">${pStats?.money || 0}</span></div>
               <div><Icon name="landmark" size={12} className="mx-auto text-emerald-600"/><p className="text-[7px] font-black text-zinc-500 uppercase">INC</p><span className="text-[10px] font-black">${getIncome(pStats)}</span></div>
-              <div><Icon name="building-2" size={12} className="mx-auto text-rose-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">TURF</p><span className="text-[10px] font-black">{pStats?.properties || 0}</span></div>
+              <div><Icon name="building-2" size={12} className="mx-auto text-cyan-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">TURF</p><span className="text-[10px] font-black">{pStats?.properties || 0}</span></div>
               <div><Icon name="users" size={12} className="mx-auto text-amber-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CREW</p><span className="text-[10px] font-black">{(pStats?.soldiers || 0)+1}</span></div>
-              <div><Icon name="crosshair" size={12} className="mx-auto text-red-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">PWR</p><span className="text-[10px] font-black">{getPower(pStats)}</span></div>
+              <div><Icon name="crosshair" size={12} className="mx-auto text-orange-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">PWR</p><span className="text-[10px] font-black">{getPower(pStats)}</span></div>
               <div><Icon name="shield-alert" size={12} className={`mx-auto ${getHeatColor(pStats?.heat || 0)}`}/><p className="text-[7px] font-black text-zinc-500 uppercase">HEAT</p><span className={`text-[10px] font-black ${getHeatColor(pStats?.heat || 0)}`}>{(pStats?.heat || 0).toFixed(1)}/5.0</span></div>
             </div>
           </div>
