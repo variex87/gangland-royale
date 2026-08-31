@@ -783,7 +783,7 @@
         else if (type === 'arms') logMsg = `${p.name} upgraded their arsenal.`;
         else if (type === 'tribute') {
             const ownerId = selectedTile ? selectedTile.owner : (battle ? battle.tile.owner : null);
-            logMsg = `${p.name} paid $300 tribute to ${PLAYER_CONFIGS[ownerId].name}.`;
+            logMsg = `${p.name} paid $${cost} tribute and ${infTransfer} INF to ${PLAYER_CONFIGS[ownerId].name}.`;
         } else if (type === 'withdraw') logMsg = `${p.name} withdrew from the confrontation.`;
 
         const tileX = selectedTile ? selectedTile.x : p.x;
