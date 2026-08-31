@@ -181,7 +181,7 @@
           case 'pinch': return <Icon name="gavel" size={24} className="text-white" />;
           case 'heartbeat': return <Icon name="heart-pulse" size={24} className="text-pink-500" />;
           case 'arms': return <Icon name="crosshair" size={24} className="text-orange-500" />;
-          case 'muscle': return <FlexArmIcon size={24} className="text-orange-500" />;
+          case 'muscle': return <FlexArmIcon size={24} className="text-amber-400" />;
           case 'buy': return <Icon name="crown" size={24} className="text-amber-500" />;
           default: return null;
         }
@@ -1317,7 +1317,22 @@
                       <>
                         <button onClick={executeBattle} className="w-full bg-red-600 py-3 rounded-xl font-black uppercase text-sm mb-2 shadow-lg shadow-red-950 active:scale-95 transition-transform">Hit ‘Em!</button>
                         {battle.tile.owner !== null && battle.tile.owner !== players[battle.attacker].id ? (
-                          <button disabled={players[battle.attacker].money < 300} onClick={() => handleAction('tribute', 300, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all ${players[battle.attacker].money >= 300 ? 'bg-zinc-800 text-white border-white/20 active:scale-95' : 'bg-zinc-900 text-zinc-600 border-transparent opacity-50 cursor-not-allowed'}`}>Pay $300 Tribute</button>
+                          (() => {
+                            const defP = players[battle.defender];
+                            const attP = players[battle.attacker];
+                            const tributeCash = 250 + ((defP.soldiers || 0) * 50);
+                            const tributeInf = Math.floor(attP.influence * 0.05);
+                            const canAfford = attP.money >= tributeCash;
+                            return (
+                              <button disabled={!canAfford} onClick={() => handleAction('tribute', tributeCash, 0, 0)} className={`w-full py-2.5 rounded-xl font-black uppercase text-[10px] border transition-all flex flex-col items-center justify-center gap-0.5 ${canAfford ? 'bg-zinc-800 text-white border-white/20 active:scale-95' : 'bg-zinc-900 text-zinc-600 border-transparent opacity-50 cursor-not-allowed'}`}>
+                                <span>Pay Tribute</span>
+                                <div className="flex gap-2 text-[9px]">
+                                  <span className="text-red-400">-${tributeCash}</span>
+                                  <span className="text-amber-400">-{tributeInf} INF</span>
+                                </div>
+                              </button>
+                            );
+                          })()
                         ) : (
                           <button onClick={() => handleAction('withdraw', 0, 0, 0)} className={`w-full py-3 rounded-xl font-black uppercase text-[10px] border transition-all bg-zinc-800 text-white border-white/20 active:scale-95 flex items-center justify-center gap-2`}><Icon name="undo-2" size={14}/> Withdraw to Start</button>
                         )}
