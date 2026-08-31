@@ -141,12 +141,12 @@
             <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3 top-1/2 -translate-y-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={10}/></button>
           </div>
         )}
-        {/* CREW BADGE (MOVED TO UPPER LEFT) */}
-        <div className="absolute -top-1 -left-1 bg-black text-white text-[9px] font-black aspect-square w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Crew">
+        {/* CREW BADGE (UPPER LEFT) */}
+        <div className="absolute -top-1 -left-1 bg-black text-white text-[8px] font-black aspect-square w-4 h-4 rounded-full border-2 border-white flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Crew">
           {soldiers + 1}
         </div>
-        {/* POWER BADGE (ADDED TO BOTTOM RIGHT) */}
-        <div className="absolute -bottom-1 -right-1 bg-zinc-900 text-cyan-400 text-[8px] font-black aspect-square w-5 h-5 rounded-full border-2 border-cyan-500/60 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
+        {/* POWER BADGE (BOTTOM RIGHT) */}
+        <div className="absolute -bottom-1 -right-1 bg-zinc-900 text-cyan-400 text-[8px] font-black aspect-square w-4 h-4 rounded-full border-2 border-cyan-500/60 flex items-center justify-center z-[110] shadow-lg leading-none" title="Total Power">
           {Math.floor(1 + soldiers + (extraPower || 0))}
         </div>
         <svg viewBox="0 0 24 24" className="w-full h-full filter drop-shadow-2xl relative z-10" fill="none">
@@ -1079,15 +1079,16 @@
                   const isLocked = lockedDistricts[t.dist.id] !== null;
                   const lockOwner = isLocked ? PLAYER_CONFIGS.find(cfg => cfg.id === lockedDistricts[t.dist.id]) : null;
                   return (
+                    return (
                     <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                      ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' opacity-50'}
+                      ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' bg-opacity-40'}
                       ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
                       ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-100' : ''}
                       ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-100' : ''}`}
                       style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
                       
-                      {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
-                     {t.type === 'property' && t.owner === null && t.cost > 0 && (
+                      {/* PROPERTY PRICE TAG IN UPPER RIGHT CORNER */}
+                      {t.type === 'property' && t.owner === null && t.cost > 0 && (
                         <span className="absolute top-0.5 right-1 text-[7px] font-black text-emerald-400/90 tracking-tighter z-10">
                           ${t.cost}
                         </span>
@@ -1095,7 +1096,7 @@
 
                       {t.type === 'hospital' && <MedicalCrossIcon size={16} className="text-red-500/80" />}
                       {t.type === 'jail' && <JailBarsIcon size={20} className="text-zinc-400" />}
-                      {t.iconName && <div className={`opacity-80 scale-90 sm:scale-100 ${owner ? 'text-white/40' : 'text-white'}`}><Icon name={t.iconName} size={18} /></div>}
+                      {t.iconName && <div className={`scale-90 sm:scale-100 ${owner ? 'text-white/40 opacity-80' : 'text-white opacity-20'}`}><Icon name={t.iconName} size={18} /></div>}
                       {t.isHQ && <div className="absolute inset-0 flex items-center justify-center"><Icon name="landmark" size={20} className="opacity-20 text-white" /></div>}
                       {isLocked && t.type === 'property' && <div className="absolute top-0.5 right-0.5 opacity-60"><Icon name="lock" size={8}/></div>}
                      <div className="absolute inset-0 flex items-center justify-center">
