@@ -135,10 +135,10 @@
         {isCurrent && <div className="absolute inset-0 rounded-full animate-pulse opacity-50 bg-white scale-125 z-0" />}
        {isCurrent && turnStarted && movesLeft > 0 && (
           <div className="absolute inset-0 z-[120] pointer-events-none">
-            <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3 left-1/2 -translate-x-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-up" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-down" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(-1, 0)}} className="absolute -left-3 top-1/2 -translate-y-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-left" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3 top-1/2 -translate-y-1/2 text-white/90 bg-black/60 backdrop-blur-sm rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={10}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-up" size={10}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-down" size={10}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(-1, 0)}} className="absolute -left-3.5 top-1/2 -translate-y-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-left" size={10}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3.5 top-1/2 -translate-y-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={10}/></button>
           </div>
         )}
         {/* CREW BADGE (YELLOW OUTLINE & TEXT) */}
@@ -1082,8 +1082,8 @@
                     <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
                       ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' bg-opacity-40'}
                       ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
-                      ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-100' : ''}
-                      ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-100' : ''}`}
+                      ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
+                      ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
                       style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
