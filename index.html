@@ -135,10 +135,10 @@
         {isCurrent && <div className="absolute inset-0 rounded-full animate-pulse opacity-50 bg-white scale-125 z-0" />}
        {isCurrent && turnStarted && movesLeft > 0 && (
           <div className="absolute inset-0 z-[120] pointer-events-none">
-            <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-up" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-down" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(-1, 0)}} className="absolute -left-3.5 top-1/2 -translate-y-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-left" size={10}/></button>
-            <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3.5 top-1/2 -translate-y-1/2 text-white bg-black/20 rounded-full p-0.5 border border-white/40 shadow-sm active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={10}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(0, -1)}} className="absolute -top-3 left-1/2 -translate-x-1/2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-up" size={14}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(0, 1)}} className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-down" size={14}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(-1, 0)}} className="absolute -left-3 top-1/2 -translate-y-1/2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-left" size={14}/></button>
+            <button onClick={(e) => {e.stopPropagation(); onMove(1, 0)}} className="absolute -right-3 top-1/2 -translate-y-1/2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] active:scale-125 pointer-events-auto flex items-center justify-center"><Icon name="chevron-right" size={14}/></button>
           </div>
         )}
         {/* CREW BADGE (YELLOW OUTLINE & TEXT) */}
@@ -1093,14 +1093,18 @@
                         </span>
                       )}
 
-                      {t.type === 'hospital' && <MedicalCrossIcon size={16} className="text-red-500/80" />}
-                      {t.type === 'jail' && <JailBarsIcon size={20} className="text-zinc-400" />}
                       {t.iconName && <div className={`scale-90 sm:scale-100 ${owner ? 'text-white/40 opacity-80' : 'text-white opacity-20'}`}><Icon name={t.iconName} size={18} /></div>}
                       {t.isHQ && <div className="absolute inset-0 flex items-center justify-center"><Icon name="landmark" size={20} className="opacity-20 text-white" /></div>}
                       {isLocked && t.type === 'property' && <div className="absolute top-0.5 right-0.5 opacity-60"><Icon name="lock" size={8}/></div>}
-                     <div className="absolute inset-0 flex items-center justify-center">
+                      
+                      {/* PLAYER TOKENS */}
+                      <div className="absolute inset-0 flex items-center justify-center">
                         {pHere.map(p => <MobsterToken key={p.id} ring={p.ring} isCurrent={players[currentPlayer]?.id === p.id} soldiers={p.soldiers} extraPower={p.extraPower} movesLeft={movesLeft} turnStarted={turnStarted} onMove={movePlayer} />)}
                       </div>
+
+                      {/* HOSPITAL & JAIL OVERLAYS (RENDERED ON TOP OF PLAYERS) */}
+                      {t.type === 'hospital' && <div className="absolute inset-0 flex items-center justify-center z-[150] pointer-events-none opacity-20"><MedicalCrossIcon size={20} className="text-red-500" /></div>}
+                      {t.type === 'jail' && <div className="absolute inset-0 flex items-center justify-center z-[150] pointer-events-none opacity-20"><JailBarsIcon size={24} className="text-zinc-200" /></div>}
                     </div>
                   );
                 })}
@@ -1146,13 +1150,13 @@
                     )}
                     {selectedTile.type === 'street' && (
                       <div className="col-span-2 grid grid-cols-3 gap-2 h-full">
-                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 150 || !!victory || !!staleMate} onClick={() => handleAction('recruit', 150, 25, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 150 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-blue-700/80 border-blue-950'}`}>
+                       <button disabled={pCurrent?.isCPU || pCurrent?.money < 150 || !!victory || !!staleMate} onClick={() => handleAction('recruit', 150, 100, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 150 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-blue-700/80 border-blue-950'}`}>
                           <span className="text-[10px] font-black uppercase">Recruit</span>
-                          <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-150" color="text-red-300" /><StatChange icon="users" value="+1 Crew" color="text-blue-300" /><StatChange icon="trending-up" value={`+$${INCOME_PER_CREW}`} color="text-emerald-400" /></div>
+                          <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-150" color="text-red-300" /><StatChange icon="crown" value="+100" color="text-amber-300" /><StatChange icon="users" value="+1 Crew" color="text-blue-300" /></div>
                         </button>
                         <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate} onClick={() => handleAction('arms', 500, 50, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 500 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-cyan-700/80 border-cyan-950'}`}>
                           <span className="text-[10px] font-black uppercase">Buy Arms</span>
-                          <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-500" color="text-red-300" /><StatChange icon="crosshair" value="+4 PWR" color="text-white" /></div>
+                          <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-500" color="text-red-300" /><StatChange icon="crown" value="+50" color="text-amber-300" /><StatChange icon="crosshair" value="+4 PWR" color="text-white" /></div>
                         </button>
                         <button disabled={pCurrent?.isCPU || !!victory || !!staleMate || !!actionOutcome} onClick={resolveHeist} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${!!actionOutcome ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-amber-700/80 border-amber-950'}`}>
                           <span className="text-[10px] font-black uppercase">Pull Heist</span>
@@ -1255,8 +1259,29 @@
                         );
                       })}
                     </div>
-                    <div className="mb-3 p-2 bg-red-600/20 border border-red-600/40 rounded-lg"><p className="text-[9px] font-black text-red-500 uppercase tracking-widest">Heat Projection</p><p className="text-[10px] text-white/80 font-bold">Attacker: +2.0 Heat</p></div>
-                    {!players[battle.attacker].isCPU ? (
+{(() => {
+                      const isLockedRaid = battle.tile.type === 'property' && lockedDistricts[battle.tile.dist.id] !== null;
+                      const cashBountyPct = isLockedRaid ? '25%' : '30%';
+                      return (
+                        <div className="mb-3 p-2 bg-red-950/60 border border-red-600/40 rounded-xl text-left space-y-1">
+                          <p className="text-[9px] font-black text-red-400 uppercase tracking-widest text-center">Operation Projection</p>
+                          <div className="grid grid-cols-3 gap-1 text-center pt-1 border-t border-white/10">
+                            <div>
+                              <p className="text-[7px] font-black text-zinc-400 uppercase">Cash Steal</p>
+                              <p className="text-[10px] font-black text-emerald-400">+{cashBountyPct}</p>
+                            </div>
+                            <div>
+                              <p className="text-[7px] font-black text-zinc-400 uppercase">Inf Siphon</p>
+                              <p className="text-[10px] font-black text-amber-400">+10%</p>
+                            </div>
+                            <div>
+                              <p className="text-[7px] font-black text-zinc-400 uppercase">Heat Gain</p>
+                              <p className="text-[10px] font-black text-red-400">+2.0</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}                    {!players[battle.attacker].isCPU ? (
                       <>
                         <button onClick={executeBattle} className="w-full bg-red-600 py-3 rounded-xl font-black uppercase text-sm mb-2 shadow-lg shadow-red-950 active:scale-95 transition-transform">Hit ‘Em!</button>
                         {battle.tile.owner !== null && battle.tile.owner !== players[battle.attacker].id ? (
