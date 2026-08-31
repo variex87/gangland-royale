@@ -813,7 +813,17 @@
           else if (type === 'tribute') {
               const targetOwnerId = selectedTile ? selectedTile.owner : battle.tile.owner;
               const ownerIdx = up.findIndex(pl => pl.id === targetOwnerId);
-              if (ownerIdx !== -1) { up[ownerIdx].money += cost; up[ownerIdx].influence += 50; }
+              if (ownerIdx !== -1) { 
+                  // Calculate 5% of the payer's influence
+                  const infTransfer = Math.floor(player.influence * 0.05);
+                  
+                  // Subtract 5% from the person paying
+                  player.influence = Math.max(0, player.influence - infTransfer);
+                  
+                  // Give the cash and the 5% influence to the Turf owner
+                  up[ownerIdx].money += cost; 
+                  up[ownerIdx].influence += infTransfer; 
+              }
           } else if (type === 'withdraw') { player.x = player.prevX; player.y = player.prevY; }
           return up;
         });
