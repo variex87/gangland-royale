@@ -93,7 +93,7 @@
     /* GAME CONSTANTS */
     const GRID_SIZE = 8;
     const BASE_INCOME = 150;
-    const INCOME_PER_PROP = 100;
+    const INCOME_PER_PROP = 200;
     const INCOME_PER_CREW = 20; 
 
     const PLAYER_CONFIGS = [
@@ -379,14 +379,15 @@
       useEffect(() => {
         if (!players.length) return;
 
-        // Check if any player has reached the 10,000 Influence Kingpin threshold
-        const influenceWinner = players.find(p => p.influence >= 10000);
+        const owners = Object.values(lockedDistricts);
+
+        // WIN RULE: Must hit 10,000 Influence AND own at least 1 locked district
+        const influenceWinner = players.find(p => p.influence >= 10000 && owners.includes(p.id));
         if (influenceWinner && !victory) {
           setVictory(influenceWinner);
           return;
         }
 
-        const owners = Object.values(lockedDistricts);
         const lockedCount = owners.filter(o => o !== null).length;
 
         if (lockedCount > prevLockedCountRef.current && prevLockedCountRef.current !== 0) {
@@ -397,7 +398,7 @@
         const uniqueOwners = [...new Set(owners.filter(o => o !== null))];
         
         for (const ownerId of uniqueOwners) {
-          const playerLockCount = owners.filter(o === ownerId).length;
+          const playerLockCount = owners.filter(o => o === ownerId).length; // (Typo fixed here!)
           if (playerLockCount === 4) {
             const winner = players.find(p => p.id === ownerId);
             if (winner && !victory) {
@@ -437,9 +438,7 @@
       const getPower = (p) => Math.floor(1 + (p?.soldiers || 0) + (p?.extraPower || 0));
       const getIncome = (p) => BASE_INCOME + ((p?.properties || 0) * INCOME_PER_PROP) + ((p?.soldiers || 0) * INCOME_PER_CREW);
       const getInfluenceGain = (p) => {
-        const fromTurf = (p?.properties || 0) * 10;
-        const fromCrew = p?.soldiers > 0 ? p.soldiers * 25 : 0;
-        return fromTurf + fromCrew;
+        return 0; // Influence is now earned only via active choices (Buying, Recruiting, Wars)
       };
 
       const calculateWinChance = (atk, def) => {
@@ -529,14 +528,14 @@
           while (up[nextIdx].isEliminated) nextIdx = (nextIdx + 1) % up.length;
           const nP = up[nextIdx];
           const inc = getIncome(nP);
-          const infGain = getInfluenceGain(nP);
-          setTicker([`${nP.name}'s turn. +$${inc} / +${infGain} INF.`, lastActionMsg.toUpperCase()]);
+          setTicker([`${nP.name}'s turn. +$${inc} cash.`, lastActionMsg.toUpperCase()]);
           if (!nP.skipTurn) { 
             up[nextIdx] = { 
-              ...nP, money: nP.money + inc, influence: nP.influence + infGain,
+              ...nP, money: nP.money + inc, 
               prevX: nP.x, prevY: nP.y 
             }; 
           }
+
           setCurrentPlayer(nextIdx);
           setViewedPlayer(nextIdx);
           return up;
@@ -1129,9 +1128,9 @@
                     {(selectedTile.type === 'hospital' || selectedTile.type === 'jail') && (<div className="col-span-2 bg-zinc-800/20 rounded-xl flex items-center justify-center text-[10px] font-black uppercase text-zinc-600 border border-dashed border-white/5 italic text-center">{selectedTile.type === 'hospital' ? 'Public Health Zone — No Operations' : 'High Security Zone — No Operations'}</div>)}
                     {selectedTile.type === 'property' && selectedTile.owner === null && (
                       <>
-                        <button disabled={pCurrent?.isCPU || pCurrent?.money < selectedTile.cost || !!victory || !!staleMate} onClick={() => handleAction('buy', selectedTile.cost, 120, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < selectedTile.cost ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-emerald-700/80 border-emerald-950'}`}>
+                        <button disabled={pCurrent?.isCPU || pCurrent?.money < selectedTile.cost || !!victory || !!staleMate} onClick={() => handleAction('buy', selectedTile.cost, 250, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < selectedTile.cost ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-emerald-700/80 border-emerald-950'}`}>
                           <span className="text-[10px] font-black uppercase">Buy Out</span>
-                          <div className="flex flex-wrap justify-center gap-1.5"><StatChange icon="briefcase" value={`-${selectedTile.cost}`} color="text-red-300" /><StatChange icon="crown" value="+120" color="text-amber-300" /><StatChange icon="trending-up" value="+$100" color="text-emerald-300" /></div>
+                          <div className="flex flex-wrap justify-center gap-1.5"><StatChange icon="briefcase" value={`-${selectedTile.cost}`} color="text-red-300" /><StatChange icon="crown" value="+250" color="text-amber-300" /><StatChange icon="trending-up" value="+$100" color="text-emerald-300" /></div>
                         </button>
                         <button disabled={pCurrent?.isCPU || !!victory || !!staleMate} onClick={() => handleAction('muscle', 0, 80, 2.0)} className="bg-red-800/80 p-2 rounded-xl border-b-4 border-red-950 flex flex-col items-center justify-center gap-1 active:translate-y-1">
                           <span className="text-[10px] font-black uppercase">Muscle In</span>
@@ -1141,11 +1140,11 @@
                     )}
                     {selectedTile.type === 'street' && (
                       <div className="col-span-2 grid grid-cols-3 gap-2 h-full">
-                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 150 || !!victory || !!staleMate} onClick={() => handleAction('recruit', 150, 40, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 150 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-blue-700/80 border-blue-950'}`}>
+                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 150 || !!victory || !!staleMate} onClick={() => handleAction('recruit', 150, 25, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 150 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-blue-700/80 border-blue-950'}`}>
                           <span className="text-[10px] font-black uppercase">Recruit</span>
                           <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-150" color="text-red-300" /><StatChange icon="users" value="+1 Crew" color="text-blue-300" /><StatChange icon="trending-up" value={`+$${INCOME_PER_CREW}`} color="text-emerald-400" /></div>
                         </button>
-                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate} onClick={() => handleAction('arms', 500, 10, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 500 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-cyan-700/80 border-cyan-950'}`}>
+                        <button disabled={pCurrent?.isCPU || pCurrent?.money < 500 || !!victory || !!staleMate} onClick={() => handleAction('arms', 500, 50, 0)} className={`p-2 rounded-xl border-b-4 flex flex-col items-center justify-center gap-1 active:translate-y-1 transition-all ${pCurrent?.money < 500 ? 'bg-zinc-800 opacity-50 border-zinc-950 cursor-not-allowed' : 'bg-cyan-700/80 border-cyan-950'}`}>
                           <span className="text-[10px] font-black uppercase">Buy Arms</span>
                           <div className="flex flex-col items-center"><StatChange icon="briefcase" value="-500" color="text-red-300" /><StatChange icon="crosshair" value="+4 PWR" color="text-white" /></div>
                         </button>
@@ -1274,9 +1273,9 @@
                       <p className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-tighter">Results:</p>
                       {battleWinner ? (
                         <div className="space-y-1 text-xs text-zinc-200">
-                          <div className="flex justify-between font-black"><span className="text-emerald-500">+100 Influence</span></div>
+                          <div className="flex justify-between font-black"><span className="text-emerald-500">+{Math.floor(players[battle.defender].influence * 0.10)} Influence</span></div>
                           <div className="flex justify-between font-black"><span className="text-emerald-500">+$ {Math.floor(players[battle.defender].money * (lockedDistricts[battle.tile.dist.id] !== null ? 0.25 : 0.3))} Bounty</span></div>
-                          <div className="flex justify-between font-black"><span className="text-red-500">-100 Rival Influence</span></div>
+                          <div className="flex justify-between font-black"><span className="text-red-500">-{Math.floor(players[battle.defender].influence * 0.10)} Rival Influence</span></div>
                           {players[battle.defender].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">Whacked 1 rival soldier</span></div>}
                           {lockedDistricts[battle.tile.dist.id] === players[battle.defender].id ? (
                               <div className="flex justify-between font-black pt-1 border-t border-white/5"><span className="text-amber-400 font-black italic uppercase text-[9px]">Hood Locked - Turf Retained by Rival</span></div>
@@ -1284,7 +1283,7 @@
                         </div>
                       ) : (
                         <div className="space-y-1 text-xs text-zinc-200">
-                          <div className="flex justify-between font-black"><span className="text-red-500">-100 Influence</span></div>
+                          <div className="flex justify-between font-black"><span className="text-red-500">-{Math.floor(players[battle.attacker].influence * 0.10)} Influence</span></div>
                           <div className="flex justify-between font-black"><span className="text-red-500">-$ {Math.floor(players[battle.attacker].money * 0.3)} Extorted</span></div>
                           {players[battle.attacker].soldiers > 0 && <div className="flex justify-between font-black"><span className="text-red-400">1 soldier whacked in battle</span></div>}
                         </div>
