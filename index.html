@@ -1130,7 +1130,6 @@
                     ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
                     ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
                     style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
->
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
                      {t.type === 'property' && t.owner === null && t.cost > 0 && (
