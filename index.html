@@ -1126,9 +1126,11 @@
                 const districtPlayer = players.find(p => p.id === t.dist.id);
                 return (
                   <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                    ${owner ? owner.color + ' border-white/40' : t.type !== 'property' ? 'bg-zinc-900/60 border-white/10 opacity-60' : districtPlayer ? districtPlayer.color + '/20 shadow-[inset_0_0_8px_rgba(0,0,0,0.4)]' : 'bg-zinc-900 border-zinc-800'}
-                    ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}`}
-                    style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : districtPlayer && t.type === 'property' ? { borderColor: districtPlayer.ring } : {}}
+                    ${owner ? owner.color + ' border-white/40' : (t.type === 'property' && districtPlayer ? districtPlayer.color + ' bg-opacity-40' : t.dist.bg + ' ' + t.dist.accent + ' bg-opacity-40')}
+                    ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
+                    ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
+                    ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
+                    style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : (!owner && t.type === 'property' && districtPlayer ? { borderColor: districtPlayer.ring } : {})}>
 >
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
