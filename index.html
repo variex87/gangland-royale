@@ -530,7 +530,7 @@
           ...c, name: c.customName, gameIdx: idx, 
           x: c.startX, y: c.startY, prevX: c.startX, prevY: c.startY, hqX: c.startX, hqY: c.startY,
           money: 1500, heat: 0, soldiers: 0, influence: 0, properties: 1, extraPower: 0, 
-          isEliminated: false, committedCrime: false, skipTurn: false
+          isEliminated: false, committedCrime: false, skipTurn: false, isFirstTurn: idx !== 0
         }));
         initMap(activeIds);
         setPlayers(initialPlayers);
@@ -581,13 +581,18 @@
           up[currentPlayer] = { ...finishedPlayer, heat: updatedHeat, committedCrime: false };
           while (up[nextIdx].isEliminated) nextIdx = (nextIdx + 1) % up.length;
           const nP = up[nextIdx];
-          const inc = getIncome(nP);
-          setTicker([`${nP.name}'s turn. +$${inc} cash.`, lastActionMsg.toUpperCase()]);
+          
+          const inc = nP.isFirstTurn ? 0 : getIncome(nP);
+          setTicker([`${nP.name}'s turn.${nP.isFirstTurn ? '' : ` +$${inc} cash.`}`, lastActionMsg.toUpperCase()]);
+          
           if (!nP.skipTurn) { 
             up[nextIdx] = { 
               ...nP, money: nP.money + inc, 
-              prevX: nP.x, prevY: nP.y 
+              prevX: nP.x, prevY: nP.y,
+              isFirstTurn: false
             }; 
+          } else {
+            up[nextIdx].isFirstTurn = false;
           }
 
           setCurrentPlayer(nextIdx);
