@@ -97,22 +97,24 @@
     const INCOME_PER_CREW = 20; 
 
     const AVAILABLE_COLORS = [
-      { color: 'bg-blue-600', text: 'text-blue-400', ring: '#2563eb' },
-      { color: 'bg-emerald-800', text: 'text-emerald-600', ring: '#059669' },
-      { color: 'bg-purple-600', text: 'text-purple-400', ring: '#9333ea' },
-      { color: 'bg-cyan-600', text: 'text-cyan-400', ring: '#0891b2' },
-      { color: 'bg-pink-500', text: 'text-pink-300', ring: '#db2777' },
-      { color: 'bg-slate-500', text: 'text-slate-300', ring: '#64748b' },
-      { color: 'bg-orange-700', text: 'text-orange-400', ring: '#c2410c' },
-      { color: 'bg-teal-600', text: 'text-teal-400', ring: '#0d9488' }
-    ];
+    { color: 'bg-blue-600', text: 'text-blue-400', ring: '#2563eb' },
+    { color: 'bg-red-600', text: 'text-red-400', ring: '#dc2626' },
+    { color: 'bg-emerald-800', text: 'text-emerald-600', ring: '#059669' },
+    { color: 'bg-purple-600', text: 'text-purple-400', ring: '#9333ea' },
+    { color: 'bg-pink-500', text: 'text-pink-300', ring: '#db2777' },
+    { color: 'bg-orange-700', text: 'text-orange-400', ring: '#c2410c' },
+    { color: 'bg-yellow-500', text: 'text-yellow-300', ring: '#eab308' },
+    { color: 'bg-cyan-600', text: 'text-cyan-400', ring: '#0891b2' },
+    { color: 'bg-teal-600', text: 'text-teal-400', ring: '#0d9488' },
+    { color: 'bg-slate-500', text: 'text-slate-300', ring: '#64748b' }
+  ];
 
-    const PLAYER_CONFIGS = [
-      { id: 0, name: 'Gambino', ...AVAILABLE_COLORS[0], startX: 0, startY: 0 },
-      { id: 1, name: 'Luciano', ...AVAILABLE_COLORS[1], startX: 7, startY: 0 },
-      { id: 2, name: 'Colombo', ...AVAILABLE_COLORS[2], startX: 0, startY: 7 },
-      { id: 3, name: 'Genovese', ...AVAILABLE_COLORS[3], startX: 7, startY: 7 },
-    ];
+  const PLAYER_CONFIGS = [
+    { id: 0, name: 'Gambino', ...AVAILABLE_COLORS[0], startX: 0, startY: 0 },
+    { id: 1, name: 'Luciano', ...AVAILABLE_COLORS[1], startX: 7, startY: 0 },
+    { id: 2, name: 'Colombo', ...AVAILABLE_COLORS[2], startX: 0, startY: 7 },
+    { id: 3, name: 'Genovese', ...AVAILABLE_COLORS[3], startX: 7, startY: 7 },
+  ];
 
     const DISTRICTS = {
       DOCKS: { id: 'DOCKS', name: 'Docks', accent: 'border-blue-500/60', bg: 'bg-zinc-900', color: 'text-blue-400', names: ["Pier 13", "Cargo Bay", "The Slipway", "Cold Storage", "Fisherman's Wharf"] },
@@ -1143,7 +1145,7 @@
                 const lockOwner = isLocked ? players.find(p => p.id === lockedDistricts[t.dist.id]) : null;
                 return (
                   <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                      ${owner ? owner.color + ' border-white/40' : t.type === 'hospital' ? 'bg-zinc-800/60 border-white/10 opacity-70' : t.type === 'jail' ? 'bg-zinc-800/60 border-white/10 opacity-70' : t.type === 'street' ? 'bg-zinc-700/50 border-white/10' : 'bg-zinc-900/40 border-zinc-700/60'}
+                      ${owner ? owner.color + ' border-white/40' : t.type === 'hospital' || t.type === 'jail' || t.type === 'street' ? 'bg-zinc-700/50 border-white/10' : 'bg-zinc-900/40 border-zinc-700/60'}
                       ${isLocked && t.type === 'property' ? '!border-2 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]' : ''}`}
                       style={{
                         borderColor: isLocked && t.type === 'property' ? lockOwner?.ring : undefined
