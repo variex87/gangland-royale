@@ -1123,9 +1123,10 @@
                   const owner = (t.owner !== null && t.type !== 'street' && t.type !== 'hospital' && t.type !== 'jail') ? players.find(p => p.id === t.owner) : null;
                 const isLocked = lockedDistricts[t.dist.id] !== null;
                 const lockOwner = isLocked ? players.find(p => p.id === lockedDistricts[t.dist.id]) : null;
-                  return (
-                    <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                      ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' bg-opacity-40'}
+                const districtPlayer = players.find(p => p.id === t.dist.id);
+                return (
+                  <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
+                    ${owner ? owner.color + ' border-white/40' : (districtPlayer ? districtPlayer.color + ' border-' + districtPlayer.color.replace('bg-', '') + ' bg-opacity-20' : 'bg-zinc-900 border-zinc-800')}
                       ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
                       ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
                       ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
