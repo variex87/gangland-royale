@@ -365,6 +365,23 @@
               else if (x < 4 && y >= 4) dist = DISTRICTS.FINANCE;
               else if (x >= 4 && y >= 4) dist = DISTRICTS.HEIGHTS;
             }
+
+            let districtOriginId = null;
+            if (dist.id === 'DOCKS') districtOriginId = 0;
+            else if (dist.id === 'ITALY') districtOriginId = 1;
+            else if (dist.id === 'FINANCE') districtOriginId = 2;
+            else if (dist.id === 'HEIGHTS') districtOriginId = 3;
+
+            let defaultBorder = null;
+            if (districtOriginId !== null) {
+                const origConfig = setupConfig.find(c => c.id === districtOriginId);
+                if (origConfig && activeIds.includes(districtOriginId)) {
+                    defaultBorder = origConfig.ring; 
+                } else {
+                    defaultBorder = '#52525b'; 
+                }
+            }
+
             let tileName = dist.names[(x + y) % dist.names.length];
             let tileType = isNeutral ? 'street' : 'property';
             if (x === 0 && y === 3) {
@@ -390,12 +407,13 @@
               locationName: hqOwnerId !== null ? `${PLAYER_CONFIGS[hqOwnerId].name} HQ` : tileName,
               type: tileType, owner: hqOwnerId, isHQ: hqOwnerId !== null,
               iconName: isNeutral ? null : BUSINESS_ICON_NAMES[(x + y) % 4],
-              cost: tileCost
+              cost: tileCost,
+              defaultBorder
             });
           }
         }
         setMap(newMap);
-      }, []);
+      }, [setupConfig]);
 
      const lockedDistricts = useMemo(() => {
         const status = { DOCKS: null, ITALY: null, FINANCE: null, HEIGHTS: null, STREET: null };
@@ -1125,10 +1143,15 @@
                 const lockOwner = isLocked ? players.find(p => p.id === lockedDistricts[t.dist.id]) : null;
                 return (
                   <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                    ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' ' + t.dist.accent + ' bg-opacity-40'}
-                    ${isLocked && t.type === 'property' ? `shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] !border-2` : ''}
-                    ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
-                    ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
+                      ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' bg-opacity-40 ' + (!t.defaultBorder ? t.dist.accent : '')}
+                      ${isLocked && t.type === 'property' ? '!border-2' : ''}
+                      ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
+                      ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
+                      style={{
+                        borderColor: isLocked && t.type === 'property' ? lockOwner?.ring : (!owner && t.defaultBorder ? t.defaultBorder : undefined),
+                        boxShadow: isLocked && t.type === 'property' ? 'inset 0 0 10px rgba(0,0,0,0.5)' : (!owner && t.defaultBorder && t.type === 'property' ? `0 0 8px ${t.defaultBorder}50` : undefined)
+                      }}
+                    >
                     style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
