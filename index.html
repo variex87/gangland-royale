@@ -1143,16 +1143,12 @@
                 const lockOwner = isLocked ? players.find(p => p.id === lockedDistricts[t.dist.id]) : null;
                 return (
                   <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                      ${owner ? owner.color + ' border-white/40' : t.dist.bg + ' bg-opacity-40 ' + (!t.defaultBorder ? t.dist.accent : '')}
-                      ${isLocked && t.type === 'property' ? '!border-2' : ''}
-                      ${t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : ''}
-                      ${t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : ''}`}
+                      ${owner ? owner.color + ' border-white/40' : t.type === 'hospital' ? 'bg-zinc-800 border-white/20 opacity-70' : t.type === 'jail' ? 'bg-zinc-950 border-red-900/60 opacity-70' : t.type === 'street' ? 'bg-zinc-900/40 border-white/5' : 'bg-zinc-900/40 border-zinc-700/60'}
+                      ${isLocked && t.type === 'property' ? '!border-2 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]' : ''}`}
                       style={{
-                        borderColor: isLocked && t.type === 'property' ? lockOwner?.ring : (!owner && t.defaultBorder ? t.defaultBorder : undefined),
-                        boxShadow: isLocked && t.type === 'property' ? 'inset 0 0 10px rgba(0,0,0,0.5)' : (!owner && t.defaultBorder && t.type === 'property' ? `0 0 8px ${t.defaultBorder}50` : undefined)
+                        borderColor: isLocked && t.type === 'property' ? lockOwner?.ring : undefined
                       }}
                     >
-                    style={isLocked && t.type === 'property' ? { borderColor: lockOwner?.ring } : {}}>
                       
                       {/* PROPERTY PRICE TAG IN UPPER LEFT CORNER */}
                      {t.type === 'property' && t.owner === null && t.cost > 0 && (
