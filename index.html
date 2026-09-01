@@ -1143,7 +1143,7 @@
                 const lockOwner = isLocked ? players.find(p => p.id === lockedDistricts[t.dist.id]) : null;
                 return (
                   <div key={t.id} className={`relative flex items-center justify-center border rounded-md transition-all duration-300
-                      ${owner ? owner.color + ' border-white/40' : t.type === 'hospital' ? 'bg-zinc-700 border-white/10 opacity-70' : t.type === 'jail' ? 'bg-zinc-700 border-white/10 opacity-70' : t.type === 'street' ? 'bg-zinc-700/50 border-white/10' : 'bg-zinc-900/40 border-zinc-700/60'}
+                      ${owner ? owner.color + ' border-white/40' : t.type === 'hospital' ? 'bg-zinc-800/60 border-white/10 opacity-70' : t.type === 'jail' ? 'bg-zinc-800/60 border-white/10 opacity-70' : t.type === 'street' ? 'bg-zinc-700/50 border-white/10' : 'bg-zinc-900/40 border-zinc-700/60'}
                       ${isLocked && t.type === 'property' ? '!border-2 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]' : ''}`}
                       style={{
                         borderColor: isLocked && t.type === 'property' ? lockOwner?.ring : undefined
