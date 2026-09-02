@@ -580,54 +580,55 @@
       }, [movesLeft, turnStarted, currentPlayer, map, victory, staleMate]);
 
       const nextTurn = useCallback((lastActionMsg) => {
-        if (victory || staleMate) return;
-        setPlayers(prev => {
-          const up = [...prev];
-          let nextIdx = (currentPlayer + 1) % up.length;
-          
-          // Auto-save game state to browser storage
-          const currentState = {
-            setupConfig,
-            map,
-            players: up,
-            currentPlayer: nextIdx,
-            viewedPlayer: nextIdx
-          };
-          localStorage.setItem('turf_empire_save', JSON.stringify(currentState));
-          const up = [...prev];
-          let nextIdx = (currentPlayer + 1) % up.length;
-          const finishedPlayer = up[currentPlayer];
-          let updatedHeat = finishedPlayer.committedCrime ? finishedPlayer.heat : Math.max(0, finishedPlayer.heat - 0.5);
-          updatedHeat = Math.round(updatedHeat * 2) / 2;
-          up[currentPlayer] = { ...finishedPlayer, heat: updatedHeat, committedCrime: false };
-          while (up[nextIdx].isEliminated) nextIdx = (nextIdx + 1) % up.length;
-          const nP = up[nextIdx];
-          
-          const inc = nP.isFirstTurn ? 0 : getIncome(nP);
-          setTicker([`${nP.name}'s turn.${nP.isFirstTurn ? '' : ` +$${inc} cash.`}`, lastActionMsg.toUpperCase()]);
-          
-          if (!nP.skipTurn) { 
-            up[nextIdx] = { 
-              ...nP, money: nP.money + inc, 
-              prevX: nP.x, prevY: nP.y,
-              isFirstTurn: false
-            }; 
-          } else {
-            up[nextIdx].isFirstTurn = false;
-          }
+  if (victory || staleMate) return;
+  setPlayers(prev => {
+    const up = [...prev];
+    let nextIdx = (currentPlayer + 1) % up.length;
+    
+    // Auto-save game state to browser storage
+    const currentState = {
+      setupConfig,
+      map,
+      players: up,
+      currentPlayer: nextIdx,
+      viewedPlayer: nextIdx
+    };
+    localStorage.setItem('turf_empire_save', JSON.stringify(currentState));
+    
+    const finishedPlayer = up[currentPlayer];
+    let updatedHeat = finishedPlayer.committedCrime ? finishedPlayer.heat : Math.max(0, finishedPlayer.heat - 0.5);
+    updatedHeat = Math.round(updatedHeat * 2) / 2;
+    up[currentPlayer] = { ...finishedPlayer, heat: updatedHeat, committedCrime: false };
+    
+    while (up[nextIdx].isEliminated) nextIdx = (nextIdx + 1) % up.length;
+    const nP = up[nextIdx];
+    
+    const inc = nP.isFirstTurn ? 0 : getIncome(nP);
+    setTicker([`${nP.name}'s turn.${nP.isFirstTurn ? '' : ` +$${inc} cash.`}`, lastActionMsg.toUpperCase()]);
+    
+    if (!nP.skipTurn) { 
+      up[nextIdx] = { 
+        ...nP, money: nP.money + inc, 
+        prevX: nP.x, prevY: nP.y,
+        isFirstTurn: false
+      }; 
+    } else {
+      up[nextIdx].isFirstTurn = false;
+    }
 
-          setCurrentPlayer(nextIdx);
-          setViewedPlayer(nextIdx);
-          return up;
-        });
-        setMovesLeft(0);
-        setTurnStarted(false);
-        setSelectedTile(null);
-        setBattle(null);
-        setBattleStep('idle');
-        setActionOutcome(null);
-        setPinched(null);
-      }, [currentPlayer, victory, staleMate]);
+    setCurrentPlayer(nextIdx);
+    setViewedPlayer(nextIdx);
+    return up;
+  });
+  setMovesLeft(0);
+  setTurnStarted(false);
+  setSelectedTile(null);
+  setBattle(null);
+  setBattleStep('idle');
+  setActionOutcome(null);
+  setPinched(null);
+}, [currentPlayer, victory, staleMate, setupConfig, map]); 
+// Note: I also added setupConfig and map to the dependency array here since you are saving them!
 
       const startRoll = useCallback(() => {
         if (turnStarted || isRolling || victory || staleMate) return;
