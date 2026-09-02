@@ -40,6 +40,15 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registered!', reg))
+          .catch(err => console.log('Service Worker registration failed: ', err));
+      });
+    }
+  </script>
   <script type="text/babel">
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
@@ -575,6 +584,18 @@
         setPlayers(prev => {
           const up = [...prev];
           let nextIdx = (currentPlayer + 1) % up.length;
+          
+          // Auto-save game state to browser storage
+          const currentState = {
+            setupConfig,
+            map,
+            players: up,
+            currentPlayer: nextIdx,
+            viewedPlayer: nextIdx
+          };
+          localStorage.setItem('turf_empire_save', JSON.stringify(currentState));
+          const up = [...prev];
+          let nextIdx = (currentPlayer + 1) % up.length;
           const finishedPlayer = up[currentPlayer];
           let updatedHeat = finishedPlayer.committedCrime ? finishedPlayer.heat : Math.max(0, finishedPlayer.heat - 0.5);
           updatedHeat = Math.round(updatedHeat * 2) / 2;
@@ -1032,9 +1053,27 @@
                   ))}
                 </div>
               </div>
-              <button onClick={handleLaunch} className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-white/5">
-                <Icon name="play" size={18} /> Launch Empire
-              </button>
+              <div className="space-y-3">
+                {localStorage.getItem('turf_empire_save') && (
+                  <button onClick={() => {
+                    const saved = JSON.parse(localStorage.getItem('turf_empire_save'));
+                    setSetupConfig(saved.setupConfig);
+                    setMap(saved.map);
+                    setPlayers(saved.players);
+                    setCurrentPlayer(saved.currentPlayer);
+                    setViewedPlayer(saved.viewedPlayer);
+                    setGameState('GAME');
+                  }} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-emerald-950">
+                    <Icon name="play-circle" size={18} /> Continue Game
+                  </button>
+                )}
+                <button onClick={() => {
+                  localStorage.removeItem('turf_empire_save');
+                  handleLaunch();
+                }} className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-white/5">
+                  <Icon name="play" size={18} /> Launch New Empire
+                </button>
+              </div>
             </div>
           </div>
         );
