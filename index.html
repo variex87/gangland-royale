@@ -1142,16 +1142,16 @@
           </div>
 
           <div className="bg-zinc-900/50 p-2 border-b border-white/5 shrink-0 z-[100]">
-            <div className="grid grid-cols-7 gap-1 max-w-lg mx-auto text-center">
-              <div><Icon name="crown" size={12} className="mx-auto text-amber-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">INF</p><span className="text-[10px] font-black">{pStats?.influence || 0}</span></div>
-              <div><Icon name="briefcase" size={12} className="mx-auto text-emerald-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CASH</p><span className="text-[10px] font-black">${pStats?.money || 0}</span></div>
-              <div><Icon name="landmark" size={12} className="mx-auto text-emerald-600"/><p className="text-[7px] font-black text-zinc-500 uppercase">INC</p><span className="text-[10px] font-black">${getIncome(pStats)}</span></div>
-              <div><Icon name="building-2" size={12} className="mx-auto text-cyan-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">TURF</p><span className="text-[10px] font-black">{pStats?.properties || 0}</span></div>
-              <div><Icon name="users" size={12} className="mx-auto text-amber-400"/><p className="text-[7px] font-black text-zinc-500 uppercase">CREW</p><span className="text-[10px] font-black">{(pStats?.soldiers || 0)+1}</span></div>
-              <div><Icon name="crosshair" size={12} className="mx-auto text-orange-500"/><p className="text-[7px] font-black text-zinc-500 uppercase">PWR</p><span className="text-[10px] font-black">{getPower(pStats)}</span></div>
-              <div><Icon name="shield-alert" size={12} className={`mx-auto ${getHeatColor(pStats?.heat || 0)}`}/><p className="text-[7px] font-black text-zinc-500 uppercase">HEAT</p><span className={`text-[10px] font-black ${getHeatColor(pStats?.heat || 0)}`}>{(pStats?.heat || 0).toFixed(1)}/5.0</span></div>
-            </div>
-          </div>
+  <div className="grid grid-cols-7 gap-1 max-w-lg mx-auto text-center">
+    <div><Icon name="crown" size={12} className="mx-auto text-amber-500"/><p className="text-[7px] font-black text-zinc-300 uppercase">INF</p><span className="text-[10px] font-black text-zinc-100">{pStats?.influence || 0}</span></div>
+    <div><Icon name="briefcase" size={12} className="mx-auto text-emerald-400"/><p className="text-[7px] font-black text-zinc-300 uppercase">CASH</p><span className="text-[10px] font-black text-zinc-100">${pStats?.money || 0}</span></div>
+    <div><Icon name="landmark" size={12} className="mx-auto text-emerald-500"/><p className="text-[7px] font-black text-zinc-300 uppercase">INC</p><span className="text-[10px] font-black text-zinc-100">${getIncome(pStats)}</span></div>
+    <div><Icon name="building-2" size={12} className="mx-auto text-cyan-400"/><p className="text-[7px] font-black text-zinc-300 uppercase">TURF</p><span className="text-[10px] font-black text-zinc-100">{pStats?.properties || 0}</span></div>
+    <div><Icon name="users" size={12} className="mx-auto text-amber-400"/><p className="text-[7px] font-black text-zinc-300 uppercase">CREW</p><span className="text-[10px] font-black text-zinc-100">{(pStats?.soldiers || 0)+1}</span></div>
+    <div><Icon name="crosshair" size={12} className="mx-auto text-orange-500"/><p className="text-[7px] font-black text-zinc-300 uppercase">PWR</p><span className="text-[10px] font-black text-zinc-100">{getPower(pStats)}</span></div>
+    <div><Icon name="shield-alert" size={12} className={`mx-auto ${getHeatColor(pStats?.heat || 0)}`}/><p className="text-[7px] font-black text-zinc-300 uppercase">HEAT</p><span className={`text-[10px] font-black ${getHeatColor(pStats?.heat || 0)}`}>{(pStats?.heat || 0).toFixed(1)}/5.0</span></div>
+  </div>
+</div>
 
           <div className="w-full p-2 flex justify-center shrink-0">
             <div className="w-full max-w-md flex items-center gap-3 bg-zinc-900/80 p-2.5 rounded-2xl border border-white/10 shadow-lg">
