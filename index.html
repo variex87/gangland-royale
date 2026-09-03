@@ -7,11 +7,11 @@
 <!-- PWA FULL-SCREEN MOBILE APP TAGS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Turf Empire">
+  <meta name="apple-mobile-web-app-title" content="Gangland Royale">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="./manifest.json">
   
-  <title>Turf Empire</title>
+  <title>Gangland Royale</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -593,7 +593,7 @@
       currentPlayer: nextIdx,
       viewedPlayer: nextIdx
     };
-    localStorage.setItem('turf_empire_save', JSON.stringify(currentState));
+    localStorage.setItem('gangland_royale_save', JSON.stringify(currentState));
     
     const finishedPlayer = up[currentPlayer];
     let updatedHeat = finishedPlayer.committedCrime ? finishedPlayer.heat : Math.max(0, finishedPlayer.heat - 0.5);
@@ -1019,7 +1019,7 @@
           <div className="fixed inset-0 bg-zinc-950 flex flex-col items-center justify-center p-4 text-white overflow-y-auto">
             <div className="w-full max-w-md bg-zinc-900 rounded-3xl border border-white/10 p-6 shadow-2xl">
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent mb-1">TURF EMPIRE</h1>
+                <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent mb-1">GANGLAND ROYALE</h1>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600">Build a family. Control the city.</p>
               </div>
               <div className="space-y-4 mb-8">
@@ -1055,9 +1055,9 @@
                 </div>
               </div>
               <div className="space-y-3">
-                {localStorage.getItem('turf_empire_save') && (
+                {localStorage.getItem('gangland_royale_save') && (
                   <button onClick={() => {
-                    const saved = JSON.parse(localStorage.getItem('turf_empire_save'));
+                    const saved = JSON.parse(localStorage.getItem('gangland_royale_save'));
                     setSetupConfig(saved.setupConfig);
                     setMap(saved.map);
                     setPlayers(saved.players);
@@ -1069,7 +1069,7 @@
                   </button>
                 )}
                 <button onClick={() => {
-                  localStorage.removeItem('turf_empire_save');
+                  localStorage.removeItem('gangland_royale_save');
                   handleLaunch();
                 }} className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-white/5">
                   <Icon name="play" size={18} /> Launch New Empire
