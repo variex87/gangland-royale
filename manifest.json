@@ -1,6 +1,6 @@
 {
   "name": "Gangland Royale",
-  "short_name": "GanglandRoyale",
+  "short_name": "Gangland Royale",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#09090b",
